@@ -17,11 +17,11 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${openSans.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col bg-background text-foreground">
+    <html lang="en" className={`${openSans.variable} h-dvh antialiased`}>
+      <body className="flex h-dvh flex-col overflow-hidden bg-background text-foreground">
         <TooltipProvider delay={150}>
           <SiteHeader />
-          <div className="flex-1 flex flex-col">{children}</div>
+          <div className="flex min-h-0 flex-1 flex-col">{children}</div>
         </TooltipProvider>
       </body>
     </html>

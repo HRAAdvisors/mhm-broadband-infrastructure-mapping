@@ -66,12 +66,12 @@ export function CountySearch({ onSelect }: CountySearchProps) {
         aria-expanded={open}
         className={cn(
           buttonVariants({ variant: "outline" }),
-          "w-64 justify-between font-normal",
+          "min-w-0 flex-1 justify-between font-normal",
         )}
       >
-        <span className="flex items-center gap-2 truncate">
+        <span className="flex min-w-0 items-center gap-2 truncate">
           <MapPin className="size-4 shrink-0 text-muted-foreground" />
-          {selected ?? "Zoom to county…"}
+          <span className="truncate">{selected ?? "Zoom to county…"}</span>
         </span>
         <ChevronsUpDown className="size-4 shrink-0 opacity-50" />
       </PopoverTrigger>

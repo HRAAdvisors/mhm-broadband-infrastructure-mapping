@@ -5,6 +5,7 @@ import { MapCanvas, type MapCanvasHandle } from "./map-canvas";
 import { LayerControlPanel } from "./layer-control-panel";
 import { Legend } from "./legend";
 import { CountySearch } from "./county-search";
+import { CollapsibleSection } from "./collapsible-section";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { defaultActiveLayerIds } from "./layers.config";
@@ -23,19 +24,19 @@ export function MapSectionView({
   );
 
   return (
-    <div className="flex flex-1 flex-col">
-      <div className="border-b border-border px-6 py-6">
-        <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+    <div className="flex h-full min-h-0 flex-1 flex-col">
+      <div className="shrink-0 border-b border-border px-4 py-3 sm:px-6 sm:py-4">
+        <h1 className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
           {section.title}
         </h1>
-        <p className="mt-1 max-w-3xl text-sm text-muted-foreground">
+        <p className="mt-0.5 max-w-3xl text-xs text-muted-foreground sm:text-sm">
           {section.dek}
         </p>
       </div>
 
-      <div className="relative flex flex-1">
-        <aside className="flex w-80 shrink-0 flex-col border-r border-border bg-sidebar">
-          <div className="flex items-center justify-between gap-2 border-b border-sidebar-border px-4 py-3">
+      <div className="relative flex min-h-0 flex-1 flex-col md:flex-row">
+        <aside className="flex max-h-[45vh] shrink-0 flex-col overflow-y-auto border-b border-border bg-sidebar md:h-full md:max-h-none md:w-80 md:overflow-visible md:border-b-0 md:border-r">
+          <div className="flex shrink-0 items-center justify-between gap-2 border-b border-sidebar-border px-4 py-3">
             <CountySearch
               onSelect={(county) => mapRef.current?.flyToBounds(county.bbox)}
             />
@@ -48,23 +49,26 @@ export function MapSectionView({
             </Button>
           </div>
 
-          <ScrollArea className="flex-1 px-4 py-4">
-            <LayerControlPanel
-              layers={layers}
-              activeLayerIds={activeLayerIds}
-              onChange={setActiveLayerIds}
-            />
-          </ScrollArea>
+          <div className="flex min-h-0 flex-1 flex-col gap-1 px-4 py-3">
+            <CollapsibleSection title="Layers" growWhenOpen defaultOpen>
+              <ScrollArea className="h-full">
+                <LayerControlPanel
+                  layers={layers}
+                  activeLayerIds={activeLayerIds}
+                  onChange={setActiveLayerIds}
+                />
+              </ScrollArea>
+            </CollapsibleSection>
+          </div>
 
-          <div className="border-t border-sidebar-border px-4 py-4">
-            <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Legend
-            </h3>
-            <Legend layers={layers} activeLayerIds={activeLayerIds} />
+          <div className="shrink-0 border-t border-sidebar-border px-4 py-3">
+            <CollapsibleSection title="Legend" defaultOpen>
+              <Legend layers={layers} activeLayerIds={activeLayerIds} />
+            </CollapsibleSection>
           </div>
         </aside>
 
-        <div className="relative flex-1">
+        <div className="relative min-h-0 flex-1">
           <MapCanvas ref={mapRef} layers={layers} activeLayerIds={activeLayerIds} />
         </div>
       </div>
