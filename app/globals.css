@@ -1,0 +1,138 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-sans);
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-heading: var(--font-sans);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+:root {
+  /* HR&A brand palette: Raisin, Cobalt, cool/warm neutrals, secondary accents */
+  --raisin: #1b1b33;
+  --cobalt: #3c4ed6;
+  --teal: #2f9e8f;
+  --gold: #c99a2e;
+  --purple: #7a5fb0;
+  --red: #c4433a;
+
+  --background: #ffffff;
+  --foreground: var(--raisin);
+  --card: #ffffff;
+  --card-foreground: var(--raisin);
+  --popover: #ffffff;
+  --popover-foreground: var(--raisin);
+  --primary: var(--cobalt);
+  --primary-foreground: #ffffff;
+  --secondary: #f4f4f7;
+  --secondary-foreground: var(--raisin);
+  --muted: #f4f4f7;
+  --muted-foreground: #6b6b7d;
+  --accent: #eceffb;
+  --accent-foreground: var(--raisin);
+  --destructive: var(--red);
+  --border: #e3e3e9;
+  --input: #e3e3e9;
+  --ring: var(--cobalt);
+  --chart-1: var(--cobalt);
+  --chart-2: var(--teal);
+  --chart-3: var(--gold);
+  --chart-4: var(--purple);
+  --chart-5: var(--red);
+  --radius: 0.5rem;
+  --sidebar: #f9f9fb;
+  --sidebar-foreground: var(--raisin);
+  --sidebar-primary: var(--cobalt);
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #eceffb;
+  --sidebar-accent-foreground: var(--raisin);
+  --sidebar-border: #e3e3e9;
+  --sidebar-ring: var(--cobalt);
+}
+
+.dark {
+  --background: #101021;
+  --foreground: #f4f4f7;
+  --card: var(--raisin);
+  --card-foreground: #f4f4f7;
+  --popover: var(--raisin);
+  --popover-foreground: #f4f4f7;
+  --primary: #7d89e8;
+  --primary-foreground: #101021;
+  --secondary: #24243f;
+  --secondary-foreground: #f4f4f7;
+  --muted: #24243f;
+  --muted-foreground: #a3a3b8;
+  --accent: #24243f;
+  --accent-foreground: #f4f4f7;
+  --destructive: #e0685f;
+  --border: rgb(255 255 255 / 12%);
+  --input: rgb(255 255 255 / 15%);
+  --ring: #7d89e8;
+  --chart-1: #7d89e8;
+  --chart-2: #4bbcac;
+  --chart-3: #d9b45a;
+  --chart-4: #9a84cf;
+  --chart-5: #e0685f;
+  --sidebar: var(--raisin);
+  --sidebar-foreground: #f4f4f7;
+  --sidebar-primary: #7d89e8;
+  --sidebar-primary-foreground: #101021;
+  --sidebar-accent: #24243f;
+  --sidebar-accent-foreground: #f4f4f7;
+  --sidebar-border: rgb(255 255 255 / 12%);
+  --sidebar-ring: #7d89e8;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
+}
