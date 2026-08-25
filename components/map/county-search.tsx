@@ -43,7 +43,10 @@ export function CountySearch({ onSelect }: CountySearchProps) {
       })
       .then((geojson) => {
         if (cancelled) return;
-        const parsed = countiesFromFeatureCollection(geojson);
+        // Real field in service-area-counties.shp is CNTY_NM, not the
+        // generic "NAME" default (confirmed via ogrinfo against the actual
+        // shapefile — see docs/data-dictionary.md).
+        const parsed = countiesFromFeatureCollection(geojson, "CNTY_NM");
         setCounties(parsed);
         setStatus(parsed.length > 0 ? "ready" : "empty");
       })

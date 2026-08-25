@@ -51,5 +51,4 @@ tslac-library-infrastructure.shp	current-investments/tslac-library-infrastructur
 # "anticipated-gaps-metric" layers share it.
 
 # --- Boundaries (drives county search/zoom) ---
-# Not yet in data/raw/ — waiting on this file.
-# service-area-counties.shp	boundaries/service-area-counties.geojson
+service-area-counties.shp	boundaries/service-area-counties.geojson

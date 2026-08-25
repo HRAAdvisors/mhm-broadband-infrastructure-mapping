@@ -135,7 +135,7 @@ colored individually.
 
 | File | Purpose |
 |---|---|
-| `service-area-counties.geojson` | Drives the county search/zoom control (`components/map/county-search.tsx`). Needs a `NAME` property per county — pass a different property name to `countiesFromFeatureCollection()` in `lib/geo.ts` if yours differs. |
+| `service-area-counties.geojson` | Drives the county search/zoom control (`components/map/county-search.tsx`). County name field is `CNTY_NM` (real value, e.g. "Atascosa") — `county-search.tsx` passes that explicitly to `countiesFromFeatureCollection()`, since the default is the more generic `NAME`. 74 counties. |
 
 This should be the MHM service-area county boundary shapefile (the black
 outline shown on every deck map), not a statewide Texas county file — keeps
