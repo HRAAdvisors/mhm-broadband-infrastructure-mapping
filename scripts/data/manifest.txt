@@ -1,0 +1,42 @@
+# Maps a raw shapefile (relative to data/raw/) to its converted output
+# (relative to data/, matching docs/data-dictionary.md and layers.config.ts).
+#
+# Format: <raw shapefile>	<output geojson>
+# - Tab-separated. Lines starting with # are ignored.
+# - Rename your shapefiles to the left-hand names below, OR edit the left
+#   column to match whatever you actually have in data/raw/.
+# - build-all.sh skips any row whose raw file doesn't exist yet, so you can
+#   fill this in / convert incrementally as files show up.
+
+# --- Existing Conditions ---
+fixed-broadband-subscription.shp	existing-conditions/fixed-broadband-subscription.geojson
+highest-quality-technology.shp	existing-conditions/highest-quality-technology.geojson
+avg-fastest-speed-all-tech.shp	existing-conditions/avg-fastest-speed-all-tech.geojson
+avg-fastest-speed-excl-satellite.shp	existing-conditions/avg-fastest-speed-excl-satellite.geojson
+consumer-choice-all-tech.shp	existing-conditions/consumer-choice-all-tech.geojson
+consumer-choice-non-satellite.shp	existing-conditions/consumer-choice-non-satellite.geojson
+median-household-income.shp	existing-conditions/median-household-income.geojson
+communities-of-color.shp	existing-conditions/communities-of-color.geojson
+food-insecurity.shp	existing-conditions/food-insecurity.geojson
+
+# --- Current Investments ---
+bead.shp	current-investments/bead.geojson
+ntia-tribal-broadband.shp	current-investments/ntia-tribal-broadband.geojson
+fcc-enhanced-alternative-connect-america.shp	current-investments/fcc-enhanced-alternative-connect-america.geojson
+fcc-connect-america-fund-phase-ii.shp	current-investments/fcc-connect-america-fund-phase-ii.geojson
+fcc-rural-digital-opportunity-fund.shp	current-investments/fcc-rural-digital-opportunity-fund.geojson
+rus-rural-econnectivity.shp	current-investments/rus-rural-econnectivity.geojson
+rus-telephone-loan-program.shp	current-investments/rus-telephone-loan-program.geojson
+treasury-boot-ii.shp	current-investments/treasury-boot-ii.geojson
+tda-priority-hospitals.shp	current-investments/tda-priority-hospitals.geojson
+tda-network-improvements.shp	current-investments/tda-network-improvements.geojson
+tslac-library-infrastructure.shp	current-investments/tslac-library-infrastructure.geojson
+
+# --- Anticipated Gaps ---
+current-infrastructure-score.shp	anticipated-gaps/current-infrastructure-score.geojson
+projected-infrastructure-score.shp	anticipated-gaps/projected-infrastructure-score.geojson
+economic-need-score.shp	anticipated-gaps/economic-need-score.geojson
+anticipated-need-index.shp	anticipated-gaps/anticipated-need-index.geojson
+
+# --- Boundaries (drives county search/zoom) ---
+service-area-counties.shp	boundaries/service-area-counties.geojson

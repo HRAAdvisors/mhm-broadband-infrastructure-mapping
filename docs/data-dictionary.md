@@ -7,13 +7,33 @@ until its file exists at that URL — nothing else needs to change.
 
 ## Pipeline
 
+Keep raw + converted files in a local `data/` directory (gitignored) —
+`data/raw/` for the original shapefiles, `data/<section>/` for converted
+output, mirroring the structure below. Only the converted files get
+uploaded; `data/raw/` never leaves your machine.
+
+**Automatic, once your shapefiles are in `data/raw/`:**
+
+```bash
+./scripts/data/build-all.sh            # converts every mapped layer
+./scripts/data/build-all.sh --upload   # ...and uploads the result to S3
+```
+
+This reads `scripts/data/manifest.txt`, which maps each raw shapefile name
+to its converted output path (one line per layer, already filled in for
+every layer in `layers.config.ts`). It skips any row whose raw file isn't
+in `data/raw/` yet and reports what it skipped — so you can drop shapefiles
+in incrementally and re-run safely. Two ways to make a shapefile match a
+manifest row:
+- rename it to what the manifest expects, or
+- edit `manifest.txt`'s left column to match whatever you actually have
+
+**Manual, one file at a time** (what `build-all.sh` calls under the hood):
+
 1. `scripts/data/convert.sh <shapefile> <output.geojson>` — shapefile → WGS84 GeoJSON
 2. `scripts/data/simplify.sh <input> <output> [percent]` — trim vertex density (skip for small boundary layers)
 3. `scripts/data/tile.sh <input> <output.mbtiles> <layer>` — only for layers too large for plain GeoJSON (see "When to tile" below)
-4. `scripts/data/upload-to-s3.sh` — sync everything under `data/` to S3
-
-Keep the raw + intermediate files in a local `data/` directory (gitignored)
-mirroring the structure below; only the final converted files get uploaded.
+4. `scripts/data/upload-to-s3.sh` — sync everything under `data/` (excluding `raw/`) to S3
 
 ## Layer inventory
 
@@ -92,9 +112,49 @@ total locations" figures suggest the underlying FCC data is at that
 granularity before aggregation), tile it rather than shipping it as raw
 GeoJSON.
 
-## S3 bucket setup (once)
+## S3 bucket setup
 
-- Public-read bucket (this is aggregate public data — FCC, ACS, Feeding
-  America, Texas BDO — not individual-level PII)
-- CORS rule allowing `GET` from your Vercel domain(s)
-- Optional: CloudFront in front of the bucket for caching + a stable custom domain
+This project uses a **shared** bucket — `de-tools-bucket` (`us-east-1`) —
+under the `mhm-broadband/` prefix, not a bucket dedicated to this project
+alone. That changes two things from a single-project setup:
+
+- **Don't set bucket-wide public access or bucket-wide CORS.** Other
+  prefixes in this bucket may belong to other projects/teams with different
+  sensitivity requirements. Scope both to the `mhm-broadband/*` prefix.
+- **Object ACLs likely won't work.** Buckets created under S3's modern
+  default ("Bucket owner enforced") have ACLs disabled entirely — a command
+  like `--acl public-read` fails with `AccessControlListNotSupported`.
+  `upload-to-s3.sh` doesn't attempt this; use a bucket policy instead.
+
+Ask whoever manages `de-tools-bucket` to add a policy statement (merge into
+the existing policy — don't overwrite it) scoped to just this prefix:
+
+```json
+{
+  "Sid": "PublicReadMhmBroadband",
+  "Effect": "Allow",
+  "Principal": "*",
+  "Action": "s3:GetObject",
+  "Resource": "arn:aws:s3:::de-tools-bucket/mhm-broadband/*"
+}
+```
+
+And a CORS rule (also fine to scope at the bucket level, since CORS rules
+don't grant access, just permit browser reads for origins that already have
+GetObject permission — but check with the bucket owner first regardless):
+
+```json
+{
+  "AllowedOrigins": ["http://localhost:3000", "https://your-vercel-domain.vercel.app"],
+  "AllowedMethods": ["GET"],
+  "AllowedHeaders": ["*"]
+}
+```
+
+This data is all aggregate/public-source (FCC, ACS, Feeding America, Texas
+BDO) — no individual-level PII — so public-read is appropriate for the
+`mhm-broadband/` prefix specifically.
+
+Optional: put CloudFront in front of `de-tools-bucket/mhm-broadband/` for
+caching and a stable custom domain, and point `NEXT_PUBLIC_DATA_BASE_URL`
+at that instead of the raw S3 URL.
