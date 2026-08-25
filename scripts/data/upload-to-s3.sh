@@ -22,13 +22,21 @@ LOCAL_DIR="${1:-data}"
 DEST="s3://${S3_BUCKET}"
 [[ -n "$S3_PREFIX" ]] && DEST="${DEST}/${S3_PREFIX}"
 
+# Two passes: GeoJSON and vector tiles need different content types, and
+# `aws s3 sync` only accepts one --content-type per invocation.
 aws s3 sync "$LOCAL_DIR" "$DEST" \
   --exclude "*" \
   --include "*.geojson" \
+  --exclude "raw/*" \
+  --exclude "_tiled-source/*" \
+  --content-type "application/geo+json" \
+  --cache-control "public, max-age=3600"
+
+aws s3 sync "$LOCAL_DIR" "$DEST" \
+  --exclude "*" \
   --include "*.mbtiles" \
   --include "**/*.pbf" \
-  --exclude "raw/*" \
-  --content-type "application/geo+json" \
+  --content-type "application/x-protobuf" \
   --cache-control "public, max-age=3600"
 
 echo "Synced $LOCAL_DIR to $DEST"

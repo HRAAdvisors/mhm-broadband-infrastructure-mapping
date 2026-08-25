@@ -22,15 +22,39 @@ type MapCanvasProps = {
   activeLayerIds: Set<string>;
 };
 
+function sanitize(id: string) {
+  return id.replace(/[^a-zA-Z0-9]/g, "-");
+}
+
+/**
+ * Multiple LayerDefinitions can point at the same underlying source (e.g.
+ * five styled views over one shared block-level vector tileset) — key the
+ * Mapbox source by the source's own identity, not the layer's, so it's
+ * fetched once and reused across every layer that reads from it.
+ */
+function sourceIdFor(source: LayerDefinition["source"]) {
+  return source.type === "geojson"
+    ? `source-geojson-${sanitize(source.path)}`
+    : `source-vector-${sanitize(source.tilesPath)}`;
+}
+
 function addLayer(map: mapboxgl.Map, layer: LayerDefinition, visible: boolean) {
-  const sourceId = `source-${layer.id}`;
+  const sourceId = sourceIdFor(layer.source);
   const layerId = `layer-${layer.id}`;
 
   if (!map.getSource(sourceId)) {
-    map.addSource(sourceId, {
-      type: "geojson",
-      data: resolveDataUrl(layer.sourcePath),
-    });
+    if (layer.source.type === "geojson") {
+      map.addSource(sourceId, {
+        type: "geojson",
+        data: resolveDataUrl(layer.source.path),
+      });
+    } else {
+      map.addSource(sourceId, {
+        type: "vector",
+        tiles: [resolveDataUrl(layer.source.tilesPath)],
+        maxzoom: layer.source.maxzoom ?? 14,
+      });
+    }
   }
 
   if (!map.getLayer(layerId)) {
@@ -38,10 +62,13 @@ function addLayer(map: mapboxgl.Map, layer: LayerDefinition, visible: boolean) {
       id: layerId,
       type: layer.geometry,
       source: sourceId,
+      ...(layer.source.type === "vector"
+        ? { "source-layer": layer.source.sourceLayer }
+        : {}),
       layout: { visibility: visible ? "visible" : "none" },
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       paint: layer.paint as any,
-    });
+    } as mapboxgl.LayerSpecification);
   }
 }
 
@@ -80,10 +107,15 @@ export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(
 
       map.on("load", () => {
         loadedRef.current = true;
-        layers.forEach((layer) =>
-          addLayer(map, layer, activeLayerIds.has(layer.id)),
-        );
+        layers.forEach((layer) => {
+          try {
+            addLayer(map, layer, activeLayerIds.has(layer.id));
+          } catch (err) {
+            console.error(`Failed to add layer "${layer.id}"`, err);
+          }
+        });
       });
+      map.on("error", (e) => console.error("Mapbox GL error", e.error));
 
       return () => {
         map.remove();

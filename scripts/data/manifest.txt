@@ -10,14 +10,20 @@
 
 # --- Existing Conditions ---
 fixed-broadband-subscription.shp	existing-conditions/fixed-broadband-subscription.geojson
-highest-quality-technology.shp	existing-conditions/highest-quality-technology.geojson
-avg-fastest-speed-all-tech.shp	existing-conditions/avg-fastest-speed-all-tech.geojson
-avg-fastest-speed-excl-satellite.shp	existing-conditions/avg-fastest-speed-excl-satellite.geojson
-consumer-choice-all-tech.shp	existing-conditions/consumer-choice-all-tech.geojson
-consumer-choice-non-satellite.shp	existing-conditions/consumer-choice-non-satellite.geojson
 median-household-income.shp	existing-conditions/median-household-income.geojson
 communities-of-color.shp	existing-conditions/communities-of-color.geojson
 food-insecurity.shp	existing-conditions/food-insecurity.geojson
+
+# highest-quality-technology.shp, average-fastest-speed-all-tech.shp,
+# average-fastest-speed-excl-satellite.shp, consumer-choice-all-tech.shp,
+# and consumer-choice-non-satellite.shp are NOT separate datasets — as
+# delivered, they're byte-identical exports of the same 171k-feature
+# block-level table (confirmed via checksum). Only ONE of them needs
+# converting/tiling; layers.config.ts's 5 "existing-conditions-metric"
+# layers all read from the resulting tiles/existing-conditions-blocks/,
+# each with its own paint expression on a different field. See
+# docs/data-dictionary.md "Tiled (vector) layers" for the exact command —
+# this doesn't go through build-all.sh, it needs tile.sh.
 
 # --- Current Investments ---
 bead.shp	current-investments/bead.geojson
@@ -32,11 +38,18 @@ tda-priority-hospitals.shp	current-investments/tda-priority-hospitals.geojson
 tda-network-improvements.shp	current-investments/tda-network-improvements.geojson
 tslac-library-infrastructure.shp	current-investments/tslac-library-infrastructure.geojson
 
+# After running build-all.sh, bead / fcc-rural-digital-opportunity-fund /
+# fcc-enhanced-alternative-connect-america / communities-of-color came out
+# 20-60MB (detailed boundary geometry, not feature count) — run
+# simplify.sh on those four before uploading. See docs/data-dictionary.md.
+
 # --- Anticipated Gaps ---
-current-infrastructure-score.shp	anticipated-gaps/current-infrastructure-score.geojson
-projected-infrastructure-score.shp	anticipated-gaps/projected-infrastructure-score.geojson
-economic-need-score.shp	anticipated-gaps/economic-need-score.geojson
-anticipated-need-index.shp	anticipated-gaps/anticipated-need-index.geojson
+# current-infrastructure-score.shp, projected-infrastructure-score.shp,
+# economic-need-score.shp, and anticipated-need-index.shp are likewise
+# byte-identical duplicates of one 171k-feature table. Same deal as above:
+# tile ONE of them to tiles/anticipated-gaps-blocks/, all 4
+# "anticipated-gaps-metric" layers share it.
 
 # --- Boundaries (drives county search/zoom) ---
-service-area-counties.shp	boundaries/service-area-counties.geojson
+# Not yet in data/raw/ — waiting on this file.
+# service-area-counties.shp	boundaries/service-area-counties.geojson

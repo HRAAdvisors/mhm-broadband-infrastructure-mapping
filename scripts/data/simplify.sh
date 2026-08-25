@@ -14,9 +14,9 @@ PERCENT="${3:-10}"
 
 mkdir -p "$(dirname "$OUTPUT")"
 
-mapshaper "$INPUT" \
+npx --yes mapshaper "$INPUT" \
   -simplify "${PERCENT}%" keep-shapes \
   -clean \
-  -o "$OUTPUT" format=geojson precision=0.000001
+  -o "$OUTPUT" format=geojson precision=0.000001 force
 
 echo "Wrote $OUTPUT (simplified ${PERCENT}%)"

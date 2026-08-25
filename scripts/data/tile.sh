@@ -1,33 +1,50 @@
 #!/usr/bin/env bash
-# Only needed for layers too large for plain GeoJSON (hundreds of thousands
-# of features — e.g. a location/parcel-level layer rather than tract/county
-# aggregates). Most of the deck's maps do NOT need this; see
-# docs/data-dictionary.md for which layers are candidates.
-#
-# Produces an .mbtiles file you either:
-#   a) upload to Mapbox Studio as a hosted tileset, or
-#   b) unpack to a {z}/{x}/{y}.pbf directory tree and serve from S3/CloudFront
-#      (see https://github.com/mapbox/tippecanoe#mbtiles-to-directory-of-tiles)
+# For layers too large for plain GeoJSON (location-level data, 100k+
+# features) — see docs/data-dictionary.md "When to tile". Builds a
+# {z}/{x}/{y}.pbf tile directory that upload-to-s3.sh can sync directly to
+# S3 for self-hosting (no Mapbox account/tileset needed).
 #
 # Requires tippecanoe (brew install tippecanoe).
 #
 # Usage:
-#   ./scripts/data/tile.sh data/anticipated-gaps/anticipated-need-index.geojson dist/tiles/anticipated-need-index.mbtiles anticipated-need-index
+#   ./scripts/data/tile.sh data/_tiled-source/highest-quality-technology.geojson data/tiles/existing-conditions-blocks existing-conditions-blocks TECHBEST,MAX_DL,MAXDLNOSAT,PROV_CNT,PRVCNTNOST
+#
+# `layer-name` must match the `sourceLayer` given for this layer in
+# components/map/layers.config.ts. `fields` is a comma-separated allowlist
+# of attributes to KEEP — every other property is dropped. This matters:
+# these source files carry dozens of GIS bookkeeping fields (parcel ids,
+# lat/lon strings, full provider-name lists...) that bloat tile size for no
+# rendering benefit, which is what was forcing tippecanoe to drop the large
+# majority of features at low zoom to stay under the tile size budget.
+# Pass "" to keep everything (fine for small inputs).
 set -euo pipefail
 
-INPUT="${1:?Usage: tile.sh <input.geojson> <output.mbtiles> <layer-name>}"
-OUTPUT="${2:?Usage: tile.sh <input.geojson> <output.mbtiles> <layer-name>}"
-LAYER_NAME="${3:?Usage: tile.sh <input.geojson> <output.mbtiles> <layer-name>}"
+INPUT="${1:?Usage: tile.sh <input.geojson> <output-dir> <layer-name> <fields>}"
+OUTPUT_DIR="${2:?Usage: tile.sh <input.geojson> <output-dir> <layer-name> <fields>}"
+LAYER_NAME="${3:?Usage: tile.sh <input.geojson> <output-dir> <layer-name> <fields>}"
+FIELDS="${4:-}"
 
-mkdir -p "$(dirname "$OUTPUT")"
+rm -rf "$OUTPUT_DIR"
+mkdir -p "$(dirname "$OUTPUT_DIR")"
+
+FIELD_ARGS=()
+if [[ -n "$FIELDS" ]]; then
+  IFS=',' read -ra FIELD_LIST <<< "$FIELDS"
+  for f in "${FIELD_LIST[@]}"; do
+    FIELD_ARGS+=(-y "$f")
+  done
+fi
 
 tippecanoe \
-  -o "$OUTPUT" \
+  --output-to-directory="$OUTPUT_DIR" \
   -l "$LAYER_NAME" \
   -zg \
   --drop-densest-as-needed \
   --extend-zooms-if-still-dropping \
-  -f \
+  --maximum-tile-bytes=2000000 \
+  --no-tile-compression \
+  --force \
+  "${FIELD_ARGS[@]}" \
   "$INPUT"
 
-echo "Wrote $OUTPUT (layer: $LAYER_NAME)"
+echo "Wrote tiles to $OUTPUT_DIR/ (layer: $LAYER_NAME)"
