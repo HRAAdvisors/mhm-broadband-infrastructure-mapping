@@ -140,7 +140,7 @@ function addCountyHighlightLayer(map: mapboxgl.Map, initialName: string | null) 
     type: "line",
     source: COUNTY_HIGHLIGHT_SOURCE_ID,
     filter: countyHighlightFilter(initialName),
-    paint: { "line-color": "#3c4ed6", "line-width": 2.5 },
+    paint: { "line-color": "#000000", "line-width": 2.5 },
   });
 }
 
@@ -257,7 +257,6 @@ export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(
         map.resize();
         map.fitBounds(SERVICE_AREA_BOUNDS, { padding: 32, duration: 0 });
         addServiceAreaOutline(map);
-        addCountyHighlightLayer(map, highlightedCountyRef.current);
         layersRef.current.forEach((layer) => {
           try {
             addLayer(map, layer, activeLayerIdsRef.current.has(layer.id));
@@ -265,6 +264,9 @@ export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(
             console.error(`Failed to add layer "${layer.id}"`, err);
           }
         });
+        // Added last (on top of every data layer) so the highlight is
+        // never buried under a choropleth fill.
+        addCountyHighlightLayer(map, highlightedCountyRef.current);
       });
       map.on("error", (e) => console.error("Mapbox GL error", e.error));
 
