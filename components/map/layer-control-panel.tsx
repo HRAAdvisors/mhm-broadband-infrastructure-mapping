@@ -65,7 +65,7 @@ export function LayerControlPanel({
                       />
                       <Label
                         htmlFor={layer.id}
-                        className="flex flex-col gap-0.5 font-normal leading-snug"
+                        className="flex flex-col items-start gap-0.5 font-normal leading-snug"
                       >
                         <span className="text-sm text-foreground">
                           {layer.label}
@@ -88,7 +88,7 @@ export function LayerControlPanel({
                     >
                       <Label
                         htmlFor={layer.id}
-                        className="flex flex-col gap-0.5 font-normal leading-snug"
+                        className="flex flex-col items-start gap-0.5 font-normal leading-snug"
                       >
                         <span className="text-sm text-foreground">
                           {layer.label}
