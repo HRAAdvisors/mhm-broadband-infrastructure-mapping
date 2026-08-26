@@ -9,9 +9,11 @@ import {
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import {
+  COUNTY_NAME_PROPERTY,
   MAPBOX_STYLE,
   MAPBOX_TOKEN,
   SERVICE_AREA_BOUNDS,
+  SERVICE_AREA_COUNTIES_PATH,
   SERVICE_AREA_OUTLINE_PATH,
 } from "@/lib/mapbox";
 import { resolveDataUrl } from "@/lib/data";
@@ -20,6 +22,8 @@ import type { LayerDefinition } from "@/lib/types";
 export type MapCanvasHandle = {
   flyToBounds: (bbox: [number, number, number, number]) => void;
   resetView: () => void;
+  /** Outlines the given county (by CNTY_NM); pass null to clear it. */
+  highlightCounty: (name: string | null) => void;
 };
 
 type MapCanvasProps = {
@@ -29,6 +33,20 @@ type MapCanvasProps = {
 
 const OUTLINE_SOURCE_ID = "source-service-area-outline";
 const OUTLINE_LAYER_ID = "layer-service-area-outline";
+
+const COUNTY_HIGHLIGHT_SOURCE_ID = "source-service-area-counties";
+const COUNTY_HIGHLIGHT_CASING_ID = "layer-county-highlight-casing";
+const COUNTY_HIGHLIGHT_LINE_ID = "layer-county-highlight-line";
+/** A filter that can never match a real county — used to "hide" the highlight. */
+const NO_COUNTY_SELECTED_FILTER: mapboxgl.FilterSpecification = [
+  "==",
+  ["get", COUNTY_NAME_PROPERTY],
+  "",
+];
+
+function countyHighlightFilter(name: string | null): mapboxgl.FilterSpecification {
+  return name ? ["==", ["get", COUNTY_NAME_PROPERTY], name] : NO_COUNTY_SELECTED_FILTER;
+}
 
 function sanitize(id: string) {
   return id.replace(/[^a-zA-Z0-9]/g, "-");
@@ -98,6 +116,34 @@ function addServiceAreaOutline(map: mapboxgl.Map) {
   });
 }
 
+/**
+ * A highlight outline for whichever county is selected in the county
+ * search — hidden (via a never-matching filter) until highlightCounty()
+ * is called. Two stacked line layers (white casing + cobalt line) so the
+ * outline stays legible over any basemap or data-layer color underneath.
+ */
+function addCountyHighlightLayer(map: mapboxgl.Map, initialName: string | null) {
+  if (map.getSource(COUNTY_HIGHLIGHT_SOURCE_ID)) return;
+  map.addSource(COUNTY_HIGHLIGHT_SOURCE_ID, {
+    type: "geojson",
+    data: resolveDataUrl(SERVICE_AREA_COUNTIES_PATH),
+  });
+  map.addLayer({
+    id: COUNTY_HIGHLIGHT_CASING_ID,
+    type: "line",
+    source: COUNTY_HIGHLIGHT_SOURCE_ID,
+    filter: countyHighlightFilter(initialName),
+    paint: { "line-color": "#ffffff", "line-width": 5.5 },
+  });
+  map.addLayer({
+    id: COUNTY_HIGHLIGHT_LINE_ID,
+    type: "line",
+    source: COUNTY_HIGHLIGHT_SOURCE_ID,
+    filter: countyHighlightFilter(initialName),
+    paint: { "line-color": "#3c4ed6", "line-width": 2.5 },
+  });
+}
+
 function escapeHtml(value: string): string {
   return value.replace(
     /[&<>"']/g,
@@ -146,6 +192,10 @@ export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(
     const layersRef = useRef(layers);
     layersRef.current = layers;
 
+    // Latest requested highlight, read when the highlight layer is first
+    // created (in case highlightCounty() is called before "load" fires).
+    const highlightedCountyRef = useRef<string | null>(null);
+
     useImperativeHandle(ref, () => ({
       flyToBounds(bbox) {
         mapRef.current?.fitBounds(bbox, { padding: 48, duration: 800 });
@@ -155,6 +205,14 @@ export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(
           padding: 32,
           duration: 800,
         });
+      },
+      highlightCounty(name) {
+        highlightedCountyRef.current = name;
+        const map = mapRef.current;
+        if (!map || !loadedRef.current) return;
+        const filter = countyHighlightFilter(name);
+        map.setFilter(COUNTY_HIGHLIGHT_CASING_ID, filter);
+        map.setFilter(COUNTY_HIGHLIGHT_LINE_ID, filter);
       },
     }));
 
@@ -199,6 +257,7 @@ export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(
         map.resize();
         map.fitBounds(SERVICE_AREA_BOUNDS, { padding: 32, duration: 0 });
         addServiceAreaOutline(map);
+        addCountyHighlightLayer(map, highlightedCountyRef.current);
         layersRef.current.forEach((layer) => {
           try {
             addLayer(map, layer, activeLayerIdsRef.current.has(layer.id));

@@ -15,3 +15,7 @@ export const SERVICE_AREA_BOUNDS: [number, number, number, number] = [
 ];
 
 export const SERVICE_AREA_OUTLINE_PATH = "boundaries/service-area-outline.geojson";
+
+/** County name field is CNTY_NM, not the more generic "NAME" — see docs/data-dictionary.md. */
+export const SERVICE_AREA_COUNTIES_PATH = "boundaries/service-area-counties.geojson";
+export const COUNTY_NAME_PROPERTY = "CNTY_NM";

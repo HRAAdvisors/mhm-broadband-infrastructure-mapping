@@ -37,13 +37,17 @@ export function MapSectionView({ section }: { section: MapSection }) {
           <div className="flex shrink-0 items-center justify-between gap-2 border-b border-sidebar-border px-4 py-3">
             <CountySearch
               ref={countySearchRef}
-              onSelect={(county) => mapRef.current?.flyToBounds(county.bbox)}
+              onSelect={(county) => {
+                mapRef.current?.flyToBounds(county.bbox);
+                mapRef.current?.highlightCounty(county.name);
+              }}
             />
             <Button
               variant="ghost"
               size="sm"
               onClick={() => {
                 mapRef.current?.resetView();
+                mapRef.current?.highlightCounty(null);
                 countySearchRef.current?.clear();
               }}
             >

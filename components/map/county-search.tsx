@@ -16,10 +16,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { cn } from "@/lib/utils";
 import { resolveDataUrl } from "@/lib/data";
 import { countiesFromFeatureCollection } from "@/lib/geo";
+import { COUNTY_NAME_PROPERTY, SERVICE_AREA_COUNTIES_PATH } from "@/lib/mapbox";
 import type { County } from "@/lib/types";
-
-/** Where the service-area county boundary layer lives — see docs/data-dictionary.md. */
-const COUNTY_BOUNDARY_PATH = "boundaries/service-area-counties.geojson";
 
 export type CountySearchHandle = {
   clear: () => void;
@@ -45,17 +43,14 @@ export const CountySearch = forwardRef<CountySearchHandle, CountySearchProps>(
     useEffect(() => {
       let cancelled = false;
 
-      fetch(resolveDataUrl(COUNTY_BOUNDARY_PATH))
+      fetch(resolveDataUrl(SERVICE_AREA_COUNTIES_PATH))
         .then((res) => {
           if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
           return res.json() as Promise<FeatureCollection>;
         })
         .then((geojson) => {
           if (cancelled) return;
-          // Real field in service-area-counties.shp is CNTY_NM, not the
-          // generic "NAME" default (confirmed via ogrinfo against the
-          // actual shapefile — see docs/data-dictionary.md).
-          const parsed = countiesFromFeatureCollection(geojson, "CNTY_NM");
+          const parsed = countiesFromFeatureCollection(geojson, COUNTY_NAME_PROPERTY);
           setCounties(parsed);
           setStatus(parsed.length > 0 ? "ready" : "empty");
         })
@@ -98,7 +93,7 @@ export const CountySearch = forwardRef<CountySearchHandle, CountySearchProps>(
               )}
               {status === "empty" && (
                 <CommandEmpty>
-                  No counties found. Add {COUNTY_BOUNDARY_PATH} — see
+                  No counties found. Add {SERVICE_AREA_COUNTIES_PATH} — see
                   docs/data-dictionary.md.
                 </CommandEmpty>
               )}
