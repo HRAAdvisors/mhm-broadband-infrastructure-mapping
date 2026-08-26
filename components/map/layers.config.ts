@@ -64,13 +64,17 @@ export const LAYERS: LayerDefinition[] = [
       // (the only category present, confusingly labeled broadband_ =
       // "no_broadband") — invert it to plot % WITH, matching the deck.
       "fill-color": [
-        "step",
-        ["-", 100, ["get", "share_of_h"]],
-        "#e9e6f2",
-        20, "#c9c0e3",
-        40, "#a494cf",
-        60, "#7f68ba",
-        80, "#5a3ca5",
+        "case",
+        ["==", ["get", "share_of_h"], null], "#d9d9df",
+        [
+          "step",
+          ["-", 100, ["get", "share_of_h"]],
+          "#e9e6f2",
+          20, "#c9c0e3",
+          40, "#a494cf",
+          60, "#7f68ba",
+          80, "#5a3ca5",
+        ],
       ],
       "fill-opacity": 0.75,
     },
@@ -82,6 +86,7 @@ export const LAYERS: LayerDefinition[] = [
         { label: "40% – 60%", color: "#a494cf" },
         { label: "60% – 80%", color: "#7f68ba" },
         { label: "80% – 100%", color: "#5a3ca5" },
+        { label: "No Data", color: "#d9d9df" },
       ],
     },
   },
@@ -152,13 +157,17 @@ export const LAYERS: LayerDefinition[] = [
     },
     paint: {
       "fill-color": [
-        "step",
-        ["get", "MAX_DL"],
-        "#d63b2f",
-        50, "#b3541e",
-        100, "#8a7a1f",
-        500, "#6f8a1f",
-        1000, "#3f8a2f",
+        "case",
+        ["==", ["get", "MAX_DL"], null], "#d9d9df",
+        [
+          "step",
+          ["get", "MAX_DL"],
+          "#d63b2f",
+          50, "#b3541e",
+          100, "#8a7a1f",
+          500, "#6f8a1f",
+          1000, "#3f8a2f",
+        ],
       ],
       "fill-opacity": 0.8,
     },
@@ -170,6 +179,7 @@ export const LAYERS: LayerDefinition[] = [
         { label: "100 – 500 Mbps", color: "#8a7a1f" },
         { label: "500 – 1,000 Mbps", color: "#6f8a1f" },
         { label: "1,000+ Mbps", color: "#3f8a2f" },
+        { label: "No Data", color: "#d9d9df" },
       ],
     },
   },
@@ -200,6 +210,7 @@ export const LAYERS: LayerDefinition[] = [
     paint: {
       "fill-color": [
         "case",
+        ["==", ["get", "MAXDLNOSAT"], null], "#d9d9df",
         ["==", ["get", "MAXDLNOSAT"], 0], "#f0a860", // no non-satellite service
         [
           "step",
@@ -222,6 +233,7 @@ export const LAYERS: LayerDefinition[] = [
         { label: "500 – 1,000 Mbps", color: "#6f8a1f" },
         { label: "1,000+ Mbps", color: "#3f8a2f" },
         { label: "No Non-Satellite Service", color: "#f0a860" },
+        { label: "No Data", color: "#d9d9df" },
       ],
     },
   },
@@ -245,13 +257,17 @@ export const LAYERS: LayerDefinition[] = [
     },
     paint: {
       "fill-color": [
-        "step",
-        ["get", "PROV_CNT"],
-        "#5a3c8a",
-        2, "#6d5aa0",
-        3, "#5f7fc4",
-        4, "#4fa3d9",
-        5, "#5ec6e8",
+        "case",
+        ["==", ["get", "PROV_CNT"], null], "#d9d9df",
+        [
+          "step",
+          ["get", "PROV_CNT"],
+          "#5a3c8a",
+          2, "#6d5aa0",
+          3, "#5f7fc4",
+          4, "#4fa3d9",
+          5, "#5ec6e8",
+        ],
       ],
       "fill-opacity": 0.8,
     },
@@ -263,6 +279,7 @@ export const LAYERS: LayerDefinition[] = [
         { label: "3 Providers", color: "#5f7fc4" },
         { label: "4 Providers", color: "#4fa3d9" },
         { label: "5+ Providers", color: "#5ec6e8" },
+        { label: "No Data", color: "#d9d9df" },
       ],
     },
   },
@@ -286,14 +303,18 @@ export const LAYERS: LayerDefinition[] = [
     },
     paint: {
       "fill-color": [
-        "step",
-        ["get", "PRVCNTNOST"],
-        "#f0a860",
-        1, "#5a3c8a",
-        2, "#6d5aa0",
-        3, "#5f7fc4",
-        4, "#4fa3d9",
-        5, "#5ec6e8",
+        "case",
+        ["==", ["get", "PRVCNTNOST"], null], "#d9d9df",
+        [
+          "step",
+          ["get", "PRVCNTNOST"],
+          "#f0a860",
+          1, "#5a3c8a",
+          2, "#6d5aa0",
+          3, "#5f7fc4",
+          4, "#4fa3d9",
+          5, "#5ec6e8",
+        ],
       ],
       "fill-opacity": 0.8,
     },
@@ -306,6 +327,7 @@ export const LAYERS: LayerDefinition[] = [
         { label: "3 Providers", color: "#5f7fc4" },
         { label: "4 Providers", color: "#4fa3d9" },
         { label: "5+ Providers", color: "#5ec6e8" },
+        { label: "No Data", color: "#d9d9df" },
       ],
     },
   },
@@ -330,13 +352,17 @@ export const LAYERS: LayerDefinition[] = [
     },
     paint: {
       "fill-color": [
-        "step",
-        ["get", "median_inc"],
-        "#8a1f1a",
-        50000, "#c4433a",
-        65000, "#d97a70",
-        80000, "#e8b3ac",
-        100000, "#d9d9df",
+        "case",
+        ["==", ["get", "median_inc"], null], "#d9d9df",
+        [
+          "step",
+          ["get", "median_inc"],
+          "#8a1f1a",
+          50000, "#c4433a",
+          65000, "#d97a70",
+          80000, "#e8b3ac",
+          100000, "#d9d9df",
+        ],
       ],
       "fill-opacity": 0.8,
     },
@@ -379,13 +405,17 @@ export const LAYERS: LayerDefinition[] = [
     },
     paint: {
       "fill-color": [
-        "step",
-        ["get", "Non-White"],
-        "#eef2f7",
-        20, "#bcd2e8",
-        40, "#7fa8cf",
-        60, "#4a7db3",
-        80, "#274f7d",
+        "case",
+        ["==", ["get", "Non-White"], null], "#d9d9df",
+        [
+          "step",
+          ["get", "Non-White"],
+          "#eef2f7",
+          20, "#bcd2e8",
+          40, "#7fa8cf",
+          60, "#4a7db3",
+          80, "#274f7d",
+        ],
       ],
       "fill-opacity": 0.8,
     },
@@ -397,6 +427,7 @@ export const LAYERS: LayerDefinition[] = [
         { label: "40% – 60%", color: "#7fa8cf" },
         { label: "60% – 80%", color: "#4a7db3" },
         { label: "80% – 100%", color: "#274f7d" },
+        { label: "No Data", color: "#d9d9df" },
       ],
     },
   },
@@ -421,13 +452,17 @@ export const LAYERS: LayerDefinition[] = [
     },
     paint: {
       "fill-color": [
-        "step",
-        ["get", "FoodInsecu"],
-        "#f3d9cf",
-        15, "#e8b3a0",
-        20, "#d97a5c",
-        25, "#c4432f",
-        30, "#8a1f1a",
+        "case",
+        ["==", ["get", "FoodInsecu"], null], "#d9d9df",
+        [
+          "step",
+          ["get", "FoodInsecu"],
+          "#f3d9cf",
+          15, "#e8b3a0",
+          20, "#d97a5c",
+          25, "#c4432f",
+          30, "#8a1f1a",
+        ],
       ],
       "fill-opacity": 0.8,
     },
@@ -439,6 +474,7 @@ export const LAYERS: LayerDefinition[] = [
         { label: "20% – 25%", color: "#d97a5c" },
         { label: "25% – 30%", color: "#c4432f" },
         { label: "> 30%", color: "#8a1f1a" },
+        { label: "No Data", color: "#d9d9df" },
       ],
     },
   },
@@ -621,8 +657,25 @@ export const LAYERS: LayerDefinition[] = [
         { label: "Status", key: "tda_prio_3" },
       ],
     },
-    paint: { "fill-color": "#7a1f1a", "fill-opacity": 0.65 },
-    legend: { type: "categorical", items: [{ label: "TDA Priority Hospitals county", color: "#7a1f1a" }] },
+    // Every county in the shapefile is a feature, but only 3 actually
+    // received this specific grant — tda_prio_1 is 1 for those, null for
+    // the rest. Without this check every county rendered identically,
+    // implying funding that didn't happen.
+    paint: {
+      "fill-color": [
+        "case",
+        ["==", ["get", "tda_prio_1"], 1], "#7a1f1a",
+        "#d9d9df",
+      ],
+      "fill-opacity": 0.65,
+    },
+    legend: {
+      type: "categorical",
+      items: [
+        { label: "TDA Priority Hospitals county", color: "#7a1f1a" },
+        { label: "No Data", color: "#d9d9df" },
+      ],
+    },
   },
   {
     id: "tda-network-improvements",
@@ -641,8 +694,22 @@ export const LAYERS: LayerDefinition[] = [
         { label: "Status", key: "tda_netw_3" },
       ],
     },
-    paint: { "fill-color": "#c4756d", "fill-opacity": 0.65 },
-    legend: { type: "categorical", items: [{ label: "TDA Network Improvements county", color: "#c4756d" }] },
+    // Same shapefile-covers-every-county caveat as tda-priority-hospitals.
+    paint: {
+      "fill-color": [
+        "case",
+        ["==", ["get", "tda_netw_1"], 1], "#c4756d",
+        "#d9d9df",
+      ],
+      "fill-opacity": 0.65,
+    },
+    legend: {
+      type: "categorical",
+      items: [
+        { label: "TDA Network Improvements county", color: "#c4756d" },
+        { label: "No Data", color: "#d9d9df" },
+      ],
+    },
   },
   {
     id: "tslac-library-infrastructure",
@@ -661,8 +728,22 @@ export const LAYERS: LayerDefinition[] = [
         { label: "Status", key: "tslac_li_3" },
       ],
     },
-    paint: { "fill-color": "#c99a2e", "fill-opacity": 0.65 },
-    legend: { type: "categorical", items: [{ label: "TSLAC Library Infrastructure county", color: "#c99a2e" }] },
+    // Same shapefile-covers-every-county caveat as tda-priority-hospitals.
+    paint: {
+      "fill-color": [
+        "case",
+        ["==", ["get", "tslac_li_1"], 1], "#c99a2e",
+        "#d9d9df",
+      ],
+      "fill-opacity": 0.65,
+    },
+    legend: {
+      type: "categorical",
+      items: [
+        { label: "TSLAC Library Infrastructure county", color: "#c99a2e" },
+        { label: "No Data", color: "#d9d9df" },
+      ],
+    },
   },
 
   // ---------------------------------------------------------------------
@@ -774,11 +855,15 @@ export const LAYERS: LayerDefinition[] = [
     },
     paint: {
       "fill-color": [
-        "interpolate",
-        ["linear"],
-        ["get", "NEED_SCR"],
-        0, "#f3ece1",
-        100, "#b3541e",
+        "case",
+        ["==", ["get", "NEED_SCR"], null], "#d9d9df",
+        [
+          "interpolate",
+          ["linear"],
+          ["get", "NEED_SCR"],
+          0, "#f3ece1",
+          100, "#b3541e",
+        ],
       ],
       "fill-opacity": 0.8,
     },
@@ -787,6 +872,7 @@ export const LAYERS: LayerDefinition[] = [
       items: [
         { label: "Lower economic need (0.0)", color: "#f3ece1" },
         { label: "Higher economic need (100.0)", color: "#b3541e" },
+        { label: "No Data", color: "#d9d9df" },
       ],
     },
   },
