@@ -1,19 +1,22 @@
 import type { LayerDefinition, LayerTooltip } from "@/lib/types";
+import { formatFundingObligated, fundingRecordsFor } from "@/lib/funding";
 
 /**
  * Shared by the 7 federal program layers below (ntia-tribal-broadband
  * through treasury-boot-ii) — they're all exported from the same FCC/RUS
  * funding-award schema (PROJECT, FA_PROVIDR, FA_FUNDOBL, FA_TECH, FA_DLUL).
+ *
+ * Funding Obligated is looked up from lib/funding.ts (sourced from HR&A's
+ * FCC Data/Funding Amounts.xlsx tracker) rather than read from FA_FUNDOBL
+ * directly — that's the authoritative figure per project; it happens to
+ * match FA_FUNDOBL for these layers, but doesn't exist at all in BEAD's
+ * shapefile (see the bead layer below), so one lookup covers both.
  */
 const FEDERAL_PROGRAM_TOOLTIP: LayerTooltip = {
   title: (p) => (typeof p.PROJECT === "string" ? p.PROJECT : null),
   rows: [
     { label: "Provider", key: "FA_PROVIDR" },
-    {
-      label: "Funding Obligated",
-      key: "FA_FUNDOBL",
-      format: (v) => `$${Number(v).toLocaleString()}`,
-    },
+    { label: "Funding Obligated", key: "PROJECT", format: formatFundingObligated },
     { label: "Technology", key: "FA_TECH" },
     { label: "Speed Tier", key: "FA_DLUL", format: (v) => `${v} Mbps` },
     { label: "Locations Planned", key: "LOC_CNT" },
@@ -356,7 +359,14 @@ export const LAYERS: LayerDefinition[] = [
     group: "existing-conditions-metric",
     interaction: "radio",
     geometry: "fill",
-    source: { type: "geojson", path: "existing-conditions/communities-of-color.geojson" },
+    // 23MB as plain GeoJSON (tract-level, statewide extent) — too large to
+    // ship flat; tiled like the block-level datasets below.
+    source: {
+      type: "vector",
+      tilesPath: "tiles/communities-of-color/{z}/{x}/{y}.pbf",
+      sourceLayer: "communities-of-color",
+      maxzoom: 11,
+    },
     tooltip: {
       title: (p) => (typeof p.NAMELSAD === "string" ? p.NAMELSAD : null),
       rows: [
@@ -444,11 +454,35 @@ export const LAYERS: LayerDefinition[] = [
     group: "current-investments-federal",
     interaction: "toggle",
     geometry: "fill",
-    source: { type: "geojson", path: "current-investments/bead.geojson" },
+    // 62MB as plain GeoJSON (89k+ funded locations) — tiled.
+    source: {
+      type: "vector",
+      tilesPath: "tiles/bead/{z}/{x}/{y}.pbf",
+      sourceLayer: "bead",
+      maxzoom: 11,
+    },
     defaultVisible: true,
+    // BEAD's shapefile carries no funding/provider/technology attributes at
+    // all (unlike the other federal programs) — everything here besides
+    // Locations Served comes from the lib/funding.ts lookup, keyed off the
+    // PROJECTS id(s). A block can be covered by more than one award
+    // ("id1; id2"); fundingRecordsFor() resolves all of them, and we show
+    // the first award's provider/technology/speed as a representative
+    // value rather than an unreadable concatenation of every award.
     tooltip: {
       rows: [
         { label: "Locations Served", key: "LOC_CNT" },
+        { label: "Funding Obligated", key: "PROJECTS", format: formatFundingObligated },
+        {
+          label: "Provider",
+          key: "PROJECTS",
+          format: (v) => fundingRecordsFor(v)[0]?.provider ?? "Not available",
+        },
+        {
+          label: "Technology",
+          key: "PROJECTS",
+          format: (v) => fundingRecordsFor(v)[0]?.technology ?? "Not available",
+        },
         { label: "Project ID", key: "PROJECTS" },
       ],
     },
@@ -476,7 +510,13 @@ export const LAYERS: LayerDefinition[] = [
     group: "current-investments-federal",
     interaction: "toggle",
     geometry: "fill",
-    source: { type: "geojson", path: "current-investments/fcc-enhanced-alternative-connect-america.geojson" },
+    // 29MB as plain GeoJSON (block-level) — tiled.
+    source: {
+      type: "vector",
+      tilesPath: "tiles/fcc-enhanced-alternative-connect-america/{z}/{x}/{y}.pbf",
+      sourceLayer: "fcc-enhanced-alternative-connect-america",
+      maxzoom: 11,
+    },
     tooltip: FEDERAL_PROGRAM_TOOLTIP,
     paint: { "fill-color": "#6f8a1f", "fill-opacity": 0.65 },
     legend: { type: "categorical", items: [{ label: "E-ACAM funded area", color: "#6f8a1f" }] },
@@ -489,7 +529,13 @@ export const LAYERS: LayerDefinition[] = [
     group: "current-investments-federal",
     interaction: "toggle",
     geometry: "fill",
-    source: { type: "geojson", path: "current-investments/fcc-connect-america-fund-phase-ii.geojson" },
+    // 12MB as plain GeoJSON (block-level) — tiled.
+    source: {
+      type: "vector",
+      tilesPath: "tiles/fcc-connect-america-fund-phase-ii/{z}/{x}/{y}.pbf",
+      sourceLayer: "fcc-connect-america-fund-phase-ii",
+      maxzoom: 11,
+    },
     tooltip: FEDERAL_PROGRAM_TOOLTIP,
     paint: { "fill-color": "#c99a2e", "fill-opacity": 0.65 },
     legend: { type: "categorical", items: [{ label: "CAF Phase II funded area", color: "#c99a2e" }] },
@@ -502,7 +548,13 @@ export const LAYERS: LayerDefinition[] = [
     group: "current-investments-federal",
     interaction: "toggle",
     geometry: "fill",
-    source: { type: "geojson", path: "current-investments/fcc-rural-digital-opportunity-fund.geojson" },
+    // 30MB as plain GeoJSON (block-level) — tiled.
+    source: {
+      type: "vector",
+      tilesPath: "tiles/fcc-rural-digital-opportunity-fund/{z}/{x}/{y}.pbf",
+      sourceLayer: "fcc-rural-digital-opportunity-fund",
+      maxzoom: 11,
+    },
     tooltip: FEDERAL_PROGRAM_TOOLTIP,
     paint: { "fill-color": "#c4433a", "fill-opacity": 0.65 },
     legend: { type: "categorical", items: [{ label: "RDOF funded area", color: "#c4433a" }] },
@@ -541,7 +593,13 @@ export const LAYERS: LayerDefinition[] = [
     group: "current-investments-federal",
     interaction: "toggle",
     geometry: "fill",
-    source: { type: "geojson", path: "current-investments/treasury-boot-ii.geojson" },
+    // 14MB as plain GeoJSON (block-level) — tiled.
+    source: {
+      type: "vector",
+      tilesPath: "tiles/treasury-boot-ii/{z}/{x}/{y}.pbf",
+      sourceLayer: "treasury-boot-ii",
+      maxzoom: 11,
+    },
     tooltip: FEDERAL_PROGRAM_TOOLTIP,
     paint: { "fill-color": "#2f5e9e", "fill-opacity": 0.65 },
     legend: { type: "categorical", items: [{ label: "BOOT II funded area", color: "#2f5e9e" }] },

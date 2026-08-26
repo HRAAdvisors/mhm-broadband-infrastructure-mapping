@@ -112,24 +112,33 @@ provider-name lists) that bloat payload for no rendering benefit.
 
 ### `current-investments/`
 
-| File | Deck source | Total funding |
-|---|---|---|
-| `bead.geojson` | Slide 19 | $1.85B |
-| `ntia-tribal-broadband.geojson` | Slide 20 | $3M |
-| `fcc-enhanced-alternative-connect-america.geojson` | Slide 21 | $979M |
-| `fcc-connect-america-fund-phase-ii.geojson` | Slide 22 | $62M |
-| `fcc-rural-digital-opportunity-fund.geojson` | Slide 23 | $311M |
-| `rus-rural-econnectivity.geojson` | Slide 24 | $94M |
-| `rus-telephone-loan-program.geojson` | Slide 25 | $10M |
-| `treasury-boot-ii.geojson` | Slide 26 | $222M |
-| `tda-priority-hospitals.geojson` | Slide 29 | $4M |
-| `tda-network-improvements.geojson` | Slide 30 | $3M |
-| `tslac-library-infrastructure.geojson` | Slide 31 | $1M |
+Despite looking like "a handful of project polygons" in the deck, most of
+these are actually **block-level** datasets (same STATEFP20/COUNTYFP20/
+TRACTCE20/BLOCKCE20/GEOID20 schema as the two tiled existing-conditions/
+anticipated-gaps datasets) — size varies enormously by how many locations
+the program touches. Six ended up too large for plain GeoJSON and are
+tiled (see "When to tile" below); the rest are small enough as-is.
 
-These are polygon-per-project layers, styled with a flat fill (`fill-color`
-in the config), so no attribute-driven expression is required — adjust if
-your shapefile instead has one feature per provider/project that should be
-colored individually.
+| File | Deck source | Total funding | Format |
+|---|---|---|---|
+| `bead` | Slide 19 | $1.85B | tiled (62MB raw → 9.4MB) |
+| `ntia-tribal-broadband.geojson` | Slide 20 | $3M | plain GeoJSON (77KB) |
+| `fcc-enhanced-alternative-connect-america` | Slide 21 | $979M | tiled (29MB raw → 4.5MB) |
+| `fcc-connect-america-fund-phase-ii` | Slide 22 | $62M | tiled (12MB raw → 2.5MB) |
+| `fcc-rural-digital-opportunity-fund` | Slide 23 | $311M | tiled (30MB raw → 5.5MB) |
+| `rus-rural-econnectivity.geojson` | Slide 24 | $94M | plain GeoJSON (4.4MB) |
+| `rus-telephone-loan-program.geojson` | Slide 25 | $10M | plain GeoJSON (3.3MB) |
+| `treasury-boot-ii` | Slide 26 | $222M | tiled (14MB raw → 2.3MB) |
+| `tda-priority-hospitals.geojson` | Slide 29 | $4M | plain GeoJSON (4.9MB, county-level) |
+| `tda-network-improvements.geojson` | Slide 30 | $3M | plain GeoJSON (4.9MB, county-level) |
+| `tslac-library-infrastructure.geojson` | Slide 31 | $1M | plain GeoJSON (4.9MB, county-level) |
+
+The tiled ones share one paint/tooltip shape (flat `fill-color`,
+`FEDERAL_PROGRAM_TOOLTIP` in `layers.config.ts`) with fields kept at tile
+time via `-y`: `PROJECT,FA_PROVIDR,FA_FUNDOBL,FA_TECH,FA_DLUL,LOC_CNT`.
+`existing-conditions/communities-of-color.geojson` has the same problem
+(23MB, tract-level but statewide extent) and is tiled the same way, fields
+`Non-White,NAMELSAD`.
 
 ### `boundaries/`
 
@@ -141,22 +150,97 @@ This should be the MHM service-area county boundary shapefile (the black
 outline shown on every deck map), not a statewide Texas county file — keeps
 the zoom/search list scoped to counties that are actually relevant.
 
-## When to tile instead of plain GeoJSON
+## Funding lookup
 
-Rule of thumb: >5MB or >~50,000 features, tile it. The two block-level
-datasets above (171k features each) are the only layers that currently
-cross that line — everything else is a tract/county aggregate and stays
-small as plain GeoJSON (tens of KB to low single-digit MB).
+BEAD's shapefile has no funding/provider/technology attributes at all
+(only `LOC_CNT`, `N_PROJECTS`, `PROJECTS`) — everything else does, via
+`FA_PROVIDR`/`FA_FUNDOBL`/`FA_TECH`/`FA_DLUL`. Rather than special-case
+BEAD's tooltip, every federal program layer's "Funding Obligated" row is
+looked up from `lib/funding.generated.ts` (a plain object, ~250 records,
+committed to the repo — no S3/runtime fetch needed), sourced from HR&A's
+own `FCC Data/Funding Amounts.xlsx` tracker. It happens to match
+`FA_FUNDOBL` exactly where that field exists, and fills the gap where it
+doesn't.
 
-A few of the plain-GeoJSON layers came out bigger than expected purely from
-vertex density (not feature count) — `bead` (62MB → 10MB), the two E-ACAM /
-RDOF federal layers (~30MB → ~6.5MB each), and `communities-of-color` (23MB
-→ 2.4MB) all needed a `simplify.sh` pass after `convert.sh`/`build-all.sh`
-before they were reasonable for a single browser fetch:
+Keyed by project name/ID exactly as the Excel's "Project" column reads
+once the `(Tranche: ...)` suffix is stripped — this matches each
+shapefile's `PROJECT` attribute (or `PROJECTS`, for BEAD) with a ~74–100%
+hit rate depending on the program; `lib/funding.ts`'s `fundingRecordsFor()`
+handles BEAD's occasional multi-award locations (`"id1; id2"`) by summing
+every matched award. A block/project with no match renders "Not available"
+rather than a wrong number.
+
+To regenerate `lib/funding.generated.ts` after the Excel is updated:
 
 ```bash
-./scripts/data/simplify.sh data/current-investments/bead.geojson data/current-investments/bead.geojson 8
+python3 - <<'PY'
+import openpyxl, re, json
+
+path = "<path to Funding Amounts.xlsx>"
+wb = openpyxl.load_workbook(path, data_only=True)
+SHEETS = [
+    "Enhanced Alternative Connect A", "Connect America Fund Phase II",
+    "Rural Digital Opportunity Fund", "Broadband Equity Access and Dep",
+    "Tribal Broadband Connectivity P", "RURAL ECONNECTIVITY PROGRAM",
+    "TELEPHONE LOAN PROGRAM", "Capital Projects Fund",
+]
+
+def norm_key(s):
+    if not s: return None
+    s = str(s).replace("\xa0", " ")
+    return re.sub(r"\s*\(Tranche:.*?\)\s*$", "", s).strip()
+
+def esc(s):
+    return "null" if s is None else json.dumps(str(s).replace("\xa0", " ").strip())
+
+records = {}
+for sheet in SHEETS:
+    rows = list(wb[sheet].iter_rows(values_only=True))
+    header_idx = next(i for i, r in enumerate(rows) if r[0] == "Project")
+    for row in rows[header_idx + 1:]:
+        project, loc_planned, funding, _, _, _, provider, tech, dlul = row[:9]
+        key = norm_key(project)
+        if key:
+            records[key] = {
+                "fundingObligated": funding if isinstance(funding, (int, float)) else None,
+                "provider": provider, "technology": tech, "speedTier": dlul,
+                "locationsPlanned": loc_planned if isinstance(loc_planned, (int, float)) else None,
+            }
+
+lines = ['export type FundingRecord = { fundingObligated: number | null; provider: string | null; technology: string | null; speedTier: string | null; locationsPlanned: number | null; };', '', 'export const FUNDING_BY_PROJECT: Record<string, FundingRecord> = {']
+for key in sorted(records):
+    r = records[key]
+    lines.append(f'  {esc(key)}: {{ fundingObligated: {r["fundingObligated"] if r["fundingObligated"] is not None else "null"}, provider: {esc(r["provider"])}, technology: {esc(r["technology"])}, speedTier: {esc(r["speedTier"])}, locationsPlanned: {r["locationsPlanned"] if r["locationsPlanned"] is not None else "null"} }},')
+lines.append('};')
+
+with open("lib/funding.generated.ts", "w") as f:
+    f.write("\n".join(lines) + "\n")
+print(f"Wrote {len(records)} records")
+PY
 ```
+
+## When to tile instead of plain GeoJSON
+
+Rule of thumb: >5MB or >~50,000 features, tile it. Check the actual
+converted file size before assuming a layer is "small" — several of the
+current-investments layers looked like a handful of project polygons in
+the deck but are actually block-level datasets that came out at
+12–62MB (see the `current-investments/` table above). Eight layers cross
+the line today: `existing-conditions-blocks` and `anticipated-gaps-blocks`
+(171k features each, shared by 5 and 4 styled layers respectively),
+`communities-of-color`, `bead`, `fcc-enhanced-alternative-connect-america`,
+`fcc-connect-america-fund-phase-ii`, `fcc-rural-digital-opportunity-fund`,
+and `treasury-boot-ii`.
+
+```bash
+./scripts/data/tile.sh data/current-investments/bead.geojson data/tiles/bead bead LOC_CNT,N_PROJECTS,PROJECTS
+```
+
+`build-all.sh` doesn't drive this step automatically — after converting a
+layer, check its file size and tile it manually if it's over the
+threshold, then flip its `layers.config.ts` entry from `{type: "geojson",
+path: ...}` to `{type: "vector", tilesPath: "tiles/<name>/{z}/{x}/{y}.pbf",
+sourceLayer: "<name>"}`.
 
 ## S3 bucket setup
 
