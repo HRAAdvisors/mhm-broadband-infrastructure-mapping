@@ -1,4 +1,24 @@
-import type { LayerDefinition } from "@/lib/types";
+import type { LayerDefinition, LayerTooltip } from "@/lib/types";
+
+/**
+ * Shared by the 7 federal program layers below (ntia-tribal-broadband
+ * through treasury-boot-ii) — they're all exported from the same FCC/RUS
+ * funding-award schema (PROJECT, FA_PROVIDR, FA_FUNDOBL, FA_TECH, FA_DLUL).
+ */
+const FEDERAL_PROGRAM_TOOLTIP: LayerTooltip = {
+  title: (p) => (typeof p.PROJECT === "string" ? p.PROJECT : null),
+  rows: [
+    { label: "Provider", key: "FA_PROVIDR" },
+    {
+      label: "Funding Obligated",
+      key: "FA_FUNDOBL",
+      format: (v) => `$${Number(v).toLocaleString()}`,
+    },
+    { label: "Technology", key: "FA_TECH" },
+    { label: "Speed Tier", key: "FA_DLUL", format: (v) => `${v} Mbps` },
+    { label: "Locations Planned", key: "LOC_CNT" },
+  ],
+};
 
 /**
  * One entry per map from the WS1 Infrastructure Deck. `source` is resolved
@@ -26,6 +46,16 @@ export const LAYERS: LayerDefinition[] = [
     geometry: "fill",
     source: { type: "geojson", path: "existing-conditions/fixed-broadband-subscription.geojson" },
     defaultVisible: true,
+    tooltip: {
+      title: (p) => (typeof p.geography === "string" ? p.geography : null),
+      rows: [
+        {
+          label: "% With Broadband",
+          key: "share_of_h",
+          format: (v) => `${(100 - Number(v)).toFixed(1)}%`,
+        },
+      ],
+    },
     paint: {
       // Source stores "share_of_h" as % of households WITHOUT broadband
       // (the only category present, confusingly labeled broadband_ =
@@ -68,6 +98,10 @@ export const LAYERS: LayerDefinition[] = [
       sourceLayer: "existing-conditions-blocks",
       maxzoom: 11,
     },
+    tooltip: {
+      title: (p) => (p.BLOCK_GEOI ? `Census Block ${p.BLOCK_GEOI}` : null),
+      rows: [{ label: "Best Technology", key: "TECHBEST" }],
+    },
     paint: {
       "fill-color": [
         "match",
@@ -106,6 +140,12 @@ export const LAYERS: LayerDefinition[] = [
       sourceLayer: "existing-conditions-blocks",
       maxzoom: 11,
     },
+    tooltip: {
+      title: (p) => (p.BLOCK_GEOI ? `Census Block ${p.BLOCK_GEOI}` : null),
+      rows: [
+        { label: "Max Download Speed", key: "MAX_DL", format: (v) => `${v} Mbps` },
+      ],
+    },
     paint: {
       "fill-color": [
         "step",
@@ -141,6 +181,16 @@ export const LAYERS: LayerDefinition[] = [
       tilesPath: "tiles/existing-conditions-blocks/{z}/{x}/{y}.pbf",
       sourceLayer: "existing-conditions-blocks",
       maxzoom: 11,
+    },
+    tooltip: {
+      title: (p) => (p.BLOCK_GEOI ? `Census Block ${p.BLOCK_GEOI}` : null),
+      rows: [
+        {
+          label: "Max Download Speed (Excl. Satellite)",
+          key: "MAXDLNOSAT",
+          format: (v) => (Number(v) === 0 ? "No non-satellite service" : `${v} Mbps`),
+        },
+      ],
     },
     paint: {
       "fill-color": [
@@ -183,6 +233,10 @@ export const LAYERS: LayerDefinition[] = [
       sourceLayer: "existing-conditions-blocks",
       maxzoom: 11,
     },
+    tooltip: {
+      title: (p) => (p.BLOCK_GEOI ? `Census Block ${p.BLOCK_GEOI}` : null),
+      rows: [{ label: "Providers Available", key: "PROV_CNT" }],
+    },
     paint: {
       "fill-color": [
         "step",
@@ -219,6 +273,10 @@ export const LAYERS: LayerDefinition[] = [
       sourceLayer: "existing-conditions-blocks",
       maxzoom: 11,
     },
+    tooltip: {
+      title: (p) => (p.BLOCK_GEOI ? `Census Block ${p.BLOCK_GEOI}` : null),
+      rows: [{ label: "Non-Satellite Providers", key: "PRVCNTNOST" }],
+    },
     paint: {
       "fill-color": [
         "step",
@@ -252,6 +310,16 @@ export const LAYERS: LayerDefinition[] = [
     interaction: "radio",
     geometry: "fill",
     source: { type: "geojson", path: "existing-conditions/median-household-income.geojson" },
+    tooltip: {
+      title: (p) => (typeof p.geo_id === "string" ? p.geo_id : null),
+      rows: [
+        {
+          label: "Median Household Income",
+          key: "median_inc",
+          format: (v) => `$${Number(v).toLocaleString()}`,
+        },
+      ],
+    },
     paint: {
       "fill-color": [
         "step",
@@ -283,6 +351,16 @@ export const LAYERS: LayerDefinition[] = [
     interaction: "radio",
     geometry: "fill",
     source: { type: "geojson", path: "existing-conditions/communities-of-color.geojson" },
+    tooltip: {
+      title: (p) => (typeof p.NAMELSAD === "string" ? p.NAMELSAD : null),
+      rows: [
+        {
+          label: "Share People of Color",
+          key: "Non-White",
+          format: (v) => `${Number(v).toFixed(1)}%`,
+        },
+      ],
+    },
     paint: {
       "fill-color": [
         "step",
@@ -315,6 +393,16 @@ export const LAYERS: LayerDefinition[] = [
     interaction: "radio",
     geometry: "fill",
     source: { type: "geojson", path: "existing-conditions/food-insecurity.geojson" },
+    tooltip: {
+      title: (p) => (typeof p.CNTY_NM === "string" ? `${p.CNTY_NM} County` : null),
+      rows: [
+        {
+          label: "Food Insecurity Rate",
+          key: "FoodInsecu",
+          format: (v) => `${Number(v).toFixed(1)}%`,
+        },
+      ],
+    },
     paint: {
       "fill-color": [
         "step",
@@ -352,6 +440,12 @@ export const LAYERS: LayerDefinition[] = [
     geometry: "fill",
     source: { type: "geojson", path: "current-investments/bead.geojson" },
     defaultVisible: true,
+    tooltip: {
+      rows: [
+        { label: "Locations Served", key: "LOC_CNT" },
+        { label: "Project ID", key: "PROJECTS" },
+      ],
+    },
     paint: { "fill-color": "#3c4ed6", "fill-opacity": 0.65 },
     legend: { type: "categorical", items: [{ label: "BEAD funded area", color: "#3c4ed6" }] },
   },
@@ -364,6 +458,7 @@ export const LAYERS: LayerDefinition[] = [
     interaction: "toggle",
     geometry: "fill",
     source: { type: "geojson", path: "current-investments/ntia-tribal-broadband.geojson" },
+    tooltip: FEDERAL_PROGRAM_TOOLTIP,
     paint: { "fill-color": "#b3541e", "fill-opacity": 0.65 },
     legend: { type: "categorical", items: [{ label: "Tribal Broadband funded area", color: "#b3541e" }] },
   },
@@ -376,6 +471,7 @@ export const LAYERS: LayerDefinition[] = [
     interaction: "toggle",
     geometry: "fill",
     source: { type: "geojson", path: "current-investments/fcc-enhanced-alternative-connect-america.geojson" },
+    tooltip: FEDERAL_PROGRAM_TOOLTIP,
     paint: { "fill-color": "#6f8a1f", "fill-opacity": 0.65 },
     legend: { type: "categorical", items: [{ label: "E-ACAM funded area", color: "#6f8a1f" }] },
   },
@@ -388,6 +484,7 @@ export const LAYERS: LayerDefinition[] = [
     interaction: "toggle",
     geometry: "fill",
     source: { type: "geojson", path: "current-investments/fcc-connect-america-fund-phase-ii.geojson" },
+    tooltip: FEDERAL_PROGRAM_TOOLTIP,
     paint: { "fill-color": "#c99a2e", "fill-opacity": 0.65 },
     legend: { type: "categorical", items: [{ label: "CAF Phase II funded area", color: "#c99a2e" }] },
   },
@@ -400,6 +497,7 @@ export const LAYERS: LayerDefinition[] = [
     interaction: "toggle",
     geometry: "fill",
     source: { type: "geojson", path: "current-investments/fcc-rural-digital-opportunity-fund.geojson" },
+    tooltip: FEDERAL_PROGRAM_TOOLTIP,
     paint: { "fill-color": "#c4433a", "fill-opacity": 0.65 },
     legend: { type: "categorical", items: [{ label: "RDOF funded area", color: "#c4433a" }] },
   },
@@ -412,6 +510,7 @@ export const LAYERS: LayerDefinition[] = [
     interaction: "toggle",
     geometry: "fill",
     source: { type: "geojson", path: "current-investments/rus-rural-econnectivity.geojson" },
+    tooltip: FEDERAL_PROGRAM_TOOLTIP,
     paint: { "fill-color": "#7a5fb0", "fill-opacity": 0.65 },
     legend: { type: "categorical", items: [{ label: "ReConnect funded area", color: "#7a5fb0" }] },
   },
@@ -424,6 +523,7 @@ export const LAYERS: LayerDefinition[] = [
     interaction: "toggle",
     geometry: "fill",
     source: { type: "geojson", path: "current-investments/rus-telephone-loan-program.geojson" },
+    tooltip: FEDERAL_PROGRAM_TOOLTIP,
     paint: { "fill-color": "#9c5fa0", "fill-opacity": 0.65 },
     legend: { type: "categorical", items: [{ label: "RUS Telephone Loan funded area", color: "#9c5fa0" }] },
   },
@@ -436,6 +536,7 @@ export const LAYERS: LayerDefinition[] = [
     interaction: "toggle",
     geometry: "fill",
     source: { type: "geojson", path: "current-investments/treasury-boot-ii.geojson" },
+    tooltip: FEDERAL_PROGRAM_TOOLTIP,
     paint: { "fill-color": "#2f5e9e", "fill-opacity": 0.65 },
     legend: { type: "categorical", items: [{ label: "BOOT II funded area", color: "#2f5e9e" }] },
   },
@@ -447,6 +548,14 @@ export const LAYERS: LayerDefinition[] = [
     interaction: "toggle",
     geometry: "fill",
     source: { type: "geojson", path: "current-investments/tda-priority-hospitals.geojson" },
+    tooltip: {
+      title: (p) => (typeof p.CNTY_NM === "string" ? `${p.CNTY_NM} County` : null),
+      rows: [
+        { label: "Facility", key: "tda_priori" },
+        { label: "Funding", key: "tda_prio_2" },
+        { label: "Status", key: "tda_prio_3" },
+      ],
+    },
     paint: { "fill-color": "#7a1f1a", "fill-opacity": 0.65 },
     legend: { type: "categorical", items: [{ label: "TDA Priority Hospitals county", color: "#7a1f1a" }] },
   },
@@ -458,6 +567,14 @@ export const LAYERS: LayerDefinition[] = [
     interaction: "toggle",
     geometry: "fill",
     source: { type: "geojson", path: "current-investments/tda-network-improvements.geojson" },
+    tooltip: {
+      title: (p) => (typeof p.CNTY_NM === "string" ? `${p.CNTY_NM} County` : null),
+      rows: [
+        { label: "Facility", key: "tda_networ" },
+        { label: "Funding", key: "tda_netw_2" },
+        { label: "Status", key: "tda_netw_3" },
+      ],
+    },
     paint: { "fill-color": "#c4756d", "fill-opacity": 0.65 },
     legend: { type: "categorical", items: [{ label: "TDA Network Improvements county", color: "#c4756d" }] },
   },
@@ -469,6 +586,14 @@ export const LAYERS: LayerDefinition[] = [
     interaction: "toggle",
     geometry: "fill",
     source: { type: "geojson", path: "current-investments/tslac-library-infrastructure.geojson" },
+    tooltip: {
+      title: (p) => (typeof p.CNTY_NM === "string" ? `${p.CNTY_NM} County` : null),
+      rows: [
+        { label: "Facility", key: "tslac_lifi" },
+        { label: "Funding", key: "tslac_li_2" },
+        { label: "Status", key: "tslac_li_3" },
+      ],
+    },
     paint: { "fill-color": "#c99a2e", "fill-opacity": 0.65 },
     legend: { type: "categorical", items: [{ label: "TSLAC Library Infrastructure county", color: "#c99a2e" }] },
   },
@@ -492,6 +617,12 @@ export const LAYERS: LayerDefinition[] = [
       maxzoom: 11,
     },
     defaultVisible: true,
+    tooltip: {
+      title: (p) =>
+        (typeof p.TRACT_ID === "string" && p.TRACT_ID) ||
+        (p.BLOCK_GEOI ? `Census Block ${p.BLOCK_GEOI}` : null),
+      rows: [{ label: "Current Service Tier", key: "CURR_TIER" }],
+    },
     paint: {
       "fill-color": [
         "match",
@@ -525,6 +656,12 @@ export const LAYERS: LayerDefinition[] = [
       tilesPath: "tiles/anticipated-gaps-blocks/{z}/{x}/{y}.pbf",
       sourceLayer: "anticipated-gaps-blocks",
       maxzoom: 11,
+    },
+    tooltip: {
+      title: (p) =>
+        (typeof p.TRACT_ID === "string" && p.TRACT_ID) ||
+        (p.BLOCK_GEOI ? `Census Block ${p.BLOCK_GEOI}` : null),
+      rows: [{ label: "Projected Service Tier", key: "POST_TIER" }],
     },
     paint: {
       "fill-color": [
@@ -560,6 +697,14 @@ export const LAYERS: LayerDefinition[] = [
       sourceLayer: "anticipated-gaps-blocks",
       maxzoom: 11,
     },
+    tooltip: {
+      title: (p) =>
+        (typeof p.TRACT_ID === "string" && p.TRACT_ID) ||
+        (p.BLOCK_GEOI ? `Census Block ${p.BLOCK_GEOI}` : null),
+      rows: [
+        { label: "Economic Need Score", key: "NEED_SCR", format: (v) => Number(v).toFixed(1) },
+      ],
+    },
     paint: {
       "fill-color": [
         "interpolate",
@@ -591,6 +736,12 @@ export const LAYERS: LayerDefinition[] = [
       tilesPath: "tiles/anticipated-gaps-blocks/{z}/{x}/{y}.pbf",
       sourceLayer: "anticipated-gaps-blocks",
       maxzoom: 11,
+    },
+    tooltip: {
+      title: (p) =>
+        (typeof p.TRACT_ID === "string" && p.TRACT_ID) ||
+        (p.BLOCK_GEOI ? `Census Block ${p.BLOCK_GEOI}` : null),
+      rows: [{ label: "Investment Priority", key: "PRI_TIER" }],
     },
     paint: {
       "fill-color": [

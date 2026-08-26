@@ -8,7 +8,12 @@ import {
 } from "react";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
-import { DEFAULT_MAP_VIEW, MAPBOX_STYLE, MAPBOX_TOKEN } from "@/lib/mapbox";
+import {
+  MAPBOX_STYLE,
+  MAPBOX_TOKEN,
+  SERVICE_AREA_BOUNDS,
+  SERVICE_AREA_OUTLINE_PATH,
+} from "@/lib/mapbox";
 import { resolveDataUrl } from "@/lib/data";
 import type { LayerDefinition } from "@/lib/types";
 
@@ -21,6 +26,9 @@ type MapCanvasProps = {
   layers: LayerDefinition[];
   activeLayerIds: Set<string>;
 };
+
+const OUTLINE_SOURCE_ID = "source-service-area-outline";
+const OUTLINE_LAYER_ID = "layer-service-area-outline";
 
 function sanitize(id: string) {
   return id.replace(/[^a-zA-Z0-9]/g, "-");
@@ -72,20 +80,79 @@ function addLayer(map: mapboxgl.Map, layer: LayerDefinition, visible: boolean) {
   }
 }
 
+/** MHM's overall service-area boundary — always visible, not user-toggleable. */
+function addServiceAreaOutline(map: mapboxgl.Map) {
+  if (map.getSource(OUTLINE_SOURCE_ID)) return;
+  map.addSource(OUTLINE_SOURCE_ID, {
+    type: "geojson",
+    data: resolveDataUrl(SERVICE_AREA_OUTLINE_PATH),
+  });
+  map.addLayer({
+    id: OUTLINE_LAYER_ID,
+    type: "line",
+    source: OUTLINE_SOURCE_ID,
+    paint: {
+      "line-color": "#1b1b33",
+      "line-width": 2,
+    },
+  });
+}
+
+function escapeHtml(value: string): string {
+  return value.replace(
+    /[&<>"']/g,
+    (c) =>
+      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[
+        c
+      ] ?? c,
+  );
+}
+
+function renderTooltip(
+  layer: LayerDefinition,
+  properties: Record<string, unknown>,
+): string {
+  const tooltip = layer.tooltip;
+  if (!tooltip) return "";
+
+  const title = tooltip.title?.(properties) || layer.label;
+  const rows = tooltip.rows
+    .map((row) => {
+      const raw = properties[row.key];
+      if (raw === null || raw === undefined || raw === "") return null;
+      const value = row.format ? row.format(raw) : String(raw);
+      return `<div class="mhm-tooltip-row"><span class="mhm-tooltip-label">${escapeHtml(
+        row.label,
+      )}</span><span class="mhm-tooltip-value">${escapeHtml(value)}</span></div>`;
+    })
+    .filter((row): row is string => row !== null)
+    .join("");
+
+  return `<div class="mhm-tooltip-title">${escapeHtml(title)}</div>${rows}`;
+}
+
 export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(
   function MapCanvas({ layers, activeLayerIds }, ref) {
     const containerRef = useRef<HTMLDivElement | null>(null);
     const mapRef = useRef<mapboxgl.Map | null>(null);
     const loadedRef = useRef(false);
 
+    // The mount effect below only runs once; this ref lets it always read
+    // the CURRENT activeLayerIds (avoids a stale-closure bug where a layer
+    // added right as "load" fires could get initial visibility from
+    // whatever activeLayerIds looked like at mount, not now).
+    const activeLayerIdsRef = useRef(activeLayerIds);
+    activeLayerIdsRef.current = activeLayerIds;
+    const layersRef = useRef(layers);
+    layersRef.current = layers;
+
     useImperativeHandle(ref, () => ({
       flyToBounds(bbox) {
         mapRef.current?.fitBounds(bbox, { padding: 48, duration: 800 });
       },
       resetView() {
-        mapRef.current?.flyTo({
-          center: [DEFAULT_MAP_VIEW.longitude, DEFAULT_MAP_VIEW.latitude],
-          zoom: DEFAULT_MAP_VIEW.zoom,
+        mapRef.current?.fitBounds(SERVICE_AREA_BOUNDS, {
+          padding: 32,
           duration: 800,
         });
       },
@@ -99,17 +166,42 @@ export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(
       const map = new mapboxgl.Map({
         container: containerRef.current,
         style: MAPBOX_STYLE,
-        center: [DEFAULT_MAP_VIEW.longitude, DEFAULT_MAP_VIEW.latitude],
-        zoom: DEFAULT_MAP_VIEW.zoom,
+        // A plain center/zoom here, not the `bounds` option: `bounds` fits
+        // against the container's size at the exact instant the map is
+        // constructed, which is unreliable in a flex layout whose size
+        // isn't always settled yet — it can silently fit against a
+        // near-zero-size box and end up zoomed way out. We fit for real
+        // in the "load" handler below, once the container is guaranteed
+        // to have its final size.
+        center: [-98.9, 29],
+        zoom: 5,
       });
       map.addControl(new mapboxgl.NavigationControl(), "top-right");
       mapRef.current = map;
 
+      // The container's flex-based size isn't always settled at the exact
+      // moment the map is constructed (e.g. navigating straight into a
+      // page), which can leave Mapbox rendering into a stale/zero-sized
+      // canvas until something forces a repaint. Keep it in sync.
+      const resizeObserver = new ResizeObserver(() => map.resize());
+      resizeObserver.observe(containerRef.current);
+
+      const popup = new mapboxgl.Popup({
+        closeButton: false,
+        closeOnClick: false,
+        className: "mhm-tooltip",
+        maxWidth: "280px",
+        offset: 12,
+      });
+
       map.on("load", () => {
         loadedRef.current = true;
-        layers.forEach((layer) => {
+        map.resize();
+        map.fitBounds(SERVICE_AREA_BOUNDS, { padding: 32, duration: 0 });
+        addServiceAreaOutline(map);
+        layersRef.current.forEach((layer) => {
           try {
-            addLayer(map, layer, activeLayerIds.has(layer.id));
+            addLayer(map, layer, activeLayerIdsRef.current.has(layer.id));
           } catch (err) {
             console.error(`Failed to add layer "${layer.id}"`, err);
           }
@@ -117,14 +209,53 @@ export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(
       });
       map.on("error", (e) => console.error("Mapbox GL error", e.error));
 
+      map.on("mousemove", (e) => {
+        const tooltipLayerIds = layersRef.current
+          .filter((l) => l.tooltip && activeLayerIdsRef.current.has(l.id))
+          .map((l) => `layer-${l.id}`)
+          .filter((id) => map.getLayer(id));
+
+        if (tooltipLayerIds.length === 0) {
+          popup.remove();
+          map.getCanvas().style.cursor = "";
+          return;
+        }
+
+        const features = map.queryRenderedFeatures(e.point, {
+          layers: tooltipLayerIds,
+        });
+        if (features.length === 0) {
+          popup.remove();
+          map.getCanvas().style.cursor = "";
+          return;
+        }
+
+        const feature = features[0];
+        const layerDef = layersRef.current.find(
+          (l) => `layer-${l.id}` === feature.layer?.id,
+        );
+        if (!layerDef) return;
+
+        map.getCanvas().style.cursor = "pointer";
+        popup
+          .setLngLat(e.lngLat)
+          .setHTML(renderTooltip(layerDef, feature.properties ?? {}))
+          .addTo(map);
+      });
+      map.on("mouseleave", () => {
+        popup.remove();
+        map.getCanvas().style.cursor = "";
+      });
+
       return () => {
+        resizeObserver.disconnect();
+        popup.remove();
         map.remove();
         mapRef.current = null;
         loadedRef.current = false;
       };
-      // Layers/activeLayerIds intentionally excluded: initial add happens on
-      // "load" above, subsequent changes are synced by the effect below.
-      // eslint-disable-next-line react-hooks/exhaustive-deps
+      // Mount-once: layers/activeLayerIds are read via refs above so this
+      // effect doesn't need to (and shouldn't) re-run when they change.
     }, []);
 
     // Sync layer visibility whenever the active set changes.

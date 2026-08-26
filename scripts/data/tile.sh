@@ -41,7 +41,7 @@ tippecanoe \
   -zg \
   --drop-densest-as-needed \
   --extend-zooms-if-still-dropping \
-  --maximum-tile-bytes=2000000 \
+  --maximum-tile-bytes=3000000 \
   --no-tile-compression \
   --force \
   "${FIELD_ARGS[@]}" \

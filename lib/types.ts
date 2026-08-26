@@ -42,6 +42,19 @@ export type LayerSource =
       maxzoom?: number;
     };
 
+export type TooltipRow = {
+  label: string;
+  /** Feature property key to read (real shapefile attribute name). */
+  key: string;
+  format?: (value: unknown) => string;
+};
+
+export type LayerTooltip = {
+  /** Defaults to the layer's own label if omitted or it returns nothing. */
+  title?: (properties: Record<string, unknown>) => string | null | undefined;
+  rows: TooltipRow[];
+};
+
 /** One toggleable/selectable map layer. */
 export type LayerDefinition = {
   id: string;
@@ -56,6 +69,8 @@ export type LayerDefinition = {
   paint: Record<string, DataDrivenPropertyValueSpecification<unknown>>;
   legend: LayerLegend;
   defaultVisible?: boolean;
+  /** Hover tooltip content — omit for layers with nothing useful to show. */
+  tooltip?: LayerTooltip;
 };
 
 export type MapSection = {
