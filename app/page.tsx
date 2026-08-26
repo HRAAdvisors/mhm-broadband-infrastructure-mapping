@@ -4,18 +4,25 @@ import { MAP_SECTIONS } from "@/lib/sections";
 export default function HomePage() {
   return (
     <main className="h-full flex-1 overflow-y-auto">
-      <section className="flex min-h-full flex-col justify-center bg-[var(--raisin)] px-6 py-16 text-white sm:py-24">
-        <div className="mx-auto w-full max-w-4xl">
+      <section className="relative flex min-h-full flex-col justify-center overflow-hidden bg-[var(--raisin)] px-6 py-16 text-white sm:py-24">
+        {/* Drop a file at public/images/hero-background.jpg to enable — falls
+            back to the plain --raisin background (below) if it's absent. */}
+        <div
+          className="absolute inset-0 bg-cover bg-center"
+          style={{ backgroundImage: "url(/images/hero-background.jpg)" }}
+        />
+        <div className="absolute inset-0 bg-[var(--raisin)]/80" />
+        <div className="relative mx-auto w-full max-w-4xl">
           <p className="text-xs font-medium uppercase tracking-widest text-white/60">
             2026 Infrastructure Investment Overview
           </p>
           <h1 className="mt-4 text-4xl font-semibold tracking-tight sm:text-5xl">
-            MHM Broadband Infrastructure Mapping
+            South Texas Broadband Infrastructure Mapping
           </h1>
           <p className="mt-4 max-w-2xl text-base text-white/80 sm:text-lg">
-            Existing conditions, current federal and state investment, and
-            anticipated gaps across Methodist Healthcare Ministries&apos;
-            Texas service area.
+            Click below to review existing conditions, current federal and
+            state investment, and anticipated gaps across Methodist
+            Healthcare Ministries&apos; 74-county South Texas service area.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             {MAP_SECTIONS.map((section) => (

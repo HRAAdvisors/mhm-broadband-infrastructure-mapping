@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import { MapCanvas, type MapCanvasHandle } from "./map-canvas";
 import { LayerControlPanel } from "./layer-control-panel";
 import { Legend } from "./legend";
-import { CountySearch } from "./county-search";
+import { CountySearch, type CountySearchHandle } from "./county-search";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { defaultActiveLayerIds, layersForSection } from "./layers.config";
@@ -16,6 +16,7 @@ export function MapSectionView({ section }: { section: MapSection }) {
   // functions can't cross the server->client boundary as props.
   const layers = layersForSection(section.id);
   const mapRef = useRef<MapCanvasHandle>(null);
+  const countySearchRef = useRef<CountySearchHandle>(null);
   const [activeLayerIds, setActiveLayerIds] = useState(() =>
     defaultActiveLayerIds(section.id),
   );
@@ -35,12 +36,16 @@ export function MapSectionView({ section }: { section: MapSection }) {
         <aside className="flex max-h-[45vh] shrink-0 flex-col overflow-y-auto border-b border-border bg-sidebar md:h-full md:max-h-none md:w-96 md:overflow-visible md:border-b-0 md:border-r">
           <div className="flex shrink-0 items-center justify-between gap-2 border-b border-sidebar-border px-4 py-3">
             <CountySearch
+              ref={countySearchRef}
               onSelect={(county) => mapRef.current?.flyToBounds(county.bbox)}
             />
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => mapRef.current?.resetView()}
+              onClick={() => {
+                mapRef.current?.resetView();
+                countySearchRef.current?.clear();
+              }}
             >
               Reset
             </Button>

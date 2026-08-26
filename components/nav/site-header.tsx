@@ -4,13 +4,13 @@ import { MAP_SECTIONS } from "@/lib/sections";
 export function SiteHeader() {
   return (
     <header className="z-20 shrink-0 border-b border-border bg-background/95 backdrop-blur">
-      <div className="mx-auto flex h-14 max-w-7xl items-center justify-between gap-2 px-3 sm:h-16 sm:px-6">
+      <div className="flex h-14 items-center justify-between gap-2 px-4 sm:h-16 sm:px-6">
         <Link href="/" className="flex shrink-0 items-center gap-2">
-          <span className="text-base font-semibold tracking-tight text-foreground sm:text-lg">
-            HR&amp;A
+          <span className="text-base font-bold tracking-tight text-foreground sm:text-lg">
+            MHM
           </span>
           <span className="hidden text-sm text-muted-foreground md:inline">
-            MHM Broadband Infrastructure Mapping
+            South Texas Broadband Infrastructure Mapping
           </span>
         </Link>
         <nav className="flex items-center gap-0.5 overflow-x-auto sm:gap-1">
