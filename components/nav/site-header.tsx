@@ -23,6 +23,12 @@ export function SiteHeader() {
               {section.title}
             </Link>
           ))}
+          <Link
+            href="/methodology"
+            className="shrink-0 rounded-full px-2.5 py-1.5 text-xs whitespace-nowrap text-foreground/80 transition-colors hover:bg-accent hover:text-foreground sm:px-4 sm:py-2 sm:text-sm"
+          >
+            Methodology
+          </Link>
         </nav>
       </div>
     </header>

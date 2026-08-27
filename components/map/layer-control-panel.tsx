@@ -36,14 +36,49 @@ export function LayerControlPanel({
       {Array.from(groups.entries()).map(([groupId, groupLayers], i) => {
         const interaction = groupLayers[0].interaction;
         const label = GROUP_LABELS[groupId] ?? groupId;
+        const allOn = groupLayers.every((l) => activeLayerIds.has(l.id));
+        const noneOn = groupLayers.every((l) => !activeLayerIds.has(l.id));
 
         return (
           <Fragment key={groupId}>
             {i > 0 && <Separator />}
             <div className="flex flex-col gap-3">
-              <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                {label}
-              </h3>
+              <div className="flex items-center justify-between gap-2">
+                <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  {label}
+                </h3>
+                {interaction === "toggle" && (
+                  <div className="flex items-center gap-2 text-xs">
+                    <button
+                      type="button"
+                      disabled={allOn}
+                      className="text-primary hover:underline disabled:pointer-events-none disabled:text-muted-foreground disabled:no-underline"
+                      onClick={() => {
+                        const next = new Set(activeLayerIds);
+                        groupLayers.forEach((l) => next.add(l.id));
+                        onChange(next);
+                      }}
+                    >
+                      Select all
+                    </button>
+                    <span className="text-border" aria-hidden>
+                      |
+                    </span>
+                    <button
+                      type="button"
+                      disabled={noneOn}
+                      className="text-primary hover:underline disabled:pointer-events-none disabled:text-muted-foreground disabled:no-underline"
+                      onClick={() => {
+                        const next = new Set(activeLayerIds);
+                        groupLayers.forEach((l) => next.delete(l.id));
+                        onChange(next);
+                      }}
+                    >
+                      Clear
+                    </button>
+                  </div>
+                )}
+              </div>
 
               {interaction === "radio" ? (
                 <RadioGroup
@@ -61,7 +96,7 @@ export function LayerControlPanel({
                       <RadioGroupItem
                         value={layer.id}
                         id={layer.id}
-                        className="mt-0.5"
+                        className="mt-0.5 border-foreground/45"
                       />
                       <Label
                         htmlFor={layer.id}

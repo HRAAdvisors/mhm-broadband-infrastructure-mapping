@@ -68,12 +68,16 @@
   --secondary: #f4f4f7;
   --secondary-foreground: var(--raisin);
   --muted: #f4f4f7;
-  --muted-foreground: #6b6b7d;
+  --muted-foreground: #5a5a6e;
   --accent: #eceffb;
   --accent-foreground: var(--raisin);
   --destructive: var(--red);
-  --border: #e3e3e9;
-  --input: #e3e3e9;
+  /* Deliberately higher-contrast than a typical subtle-border value —
+     radio buttons, switch tracks, and scrollbar thumbs all derive their
+     visibility from this token, and the original #e3e3e9 read as nearly
+     invisible against the white/off-white sidebar. */
+  --border: #b8b8c4;
+  --input: #b8b8c4;
   --ring: var(--cobalt);
   --chart-1: var(--cobalt);
   --chart-2: var(--teal);

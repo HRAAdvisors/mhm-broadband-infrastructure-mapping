@@ -118,7 +118,9 @@ export const LAYERS: LayerDefinition[] = [
         "Cable", "#b3541e",
         "Copper", "#9c1f5c",
         "Fixed Wireless", "#e0453f",
-        "Satellite", "#f0a860",
+        // A distinct yellow rather than a warm tan — needs to read clearly
+        // against the reds/oranges/magenta used by the other technologies.
+        "Satellite", "#f5c518",
         "#d9d9df", // null / no residential population
       ],
       "fill-opacity": 0.8,
@@ -130,7 +132,7 @@ export const LAYERS: LayerDefinition[] = [
         { label: "Cable", color: "#b3541e" },
         { label: "Copper", color: "#9c1f5c" },
         { label: "Fixed Wireless", color: "#e0453f" },
-        { label: "Satellite", color: "#f0a860" },
+        { label: "Satellite", color: "#f5c518" },
         { label: "No Residential Population", color: "#d9d9df" },
       ],
     },
@@ -211,7 +213,9 @@ export const LAYERS: LayerDefinition[] = [
       "fill-color": [
         "case",
         ["==", ["get", "MAXDLNOSAT"], null], "#d9d9df",
-        ["==", ["get", "MAXDLNOSAT"], 0], "#f0a860", // no non-satellite service
+        // Purple rather than the tan reused for "Satellite" elsewhere —
+        // that overlap made the two easy to mix up across maps.
+        ["==", ["get", "MAXDLNOSAT"], 0], "#7a5fb0", // no non-satellite service
         [
           "step",
           ["get", "MAXDLNOSAT"],
@@ -232,7 +236,7 @@ export const LAYERS: LayerDefinition[] = [
         { label: "100 – 500 Mbps", color: "#8a7a1f" },
         { label: "500 – 1,000 Mbps", color: "#6f8a1f" },
         { label: "1,000+ Mbps", color: "#3f8a2f" },
-        { label: "No Non-Satellite Service", color: "#f0a860" },
+        { label: "No Non-Satellite Service", color: "#7a5fb0" },
         { label: "No Data", color: "#d9d9df" },
       ],
     },
@@ -308,7 +312,12 @@ export const LAYERS: LayerDefinition[] = [
         [
           "step",
           ["get", "PRVCNTNOST"],
-          "#f0a860",
+          // Red, matching the "critical/no service" convention used
+          // elsewhere in the app — zero providers is the worst outcome
+          // here, not just another step in the sequence, and reused the
+          // same tan as "Satellite" and "No Non-Satellite Service" on
+          // other maps before this, which was confusing.
+          "#c4332a",
           1, "#5a3c8a",
           2, "#6d5aa0",
           3, "#5f7fc4",
@@ -321,7 +330,7 @@ export const LAYERS: LayerDefinition[] = [
     legend: {
       type: "categorical",
       items: [
-        { label: "0 Providers", color: "#f0a860" },
+        { label: "0 Providers", color: "#c4332a" },
         { label: "1 Provider", color: "#5a3c8a" },
         { label: "2 Providers", color: "#6d5aa0" },
         { label: "3 Providers", color: "#5f7fc4" },
@@ -835,7 +844,7 @@ export const LAYERS: LayerDefinition[] = [
     id: "economic-need-score",
     section: "anticipated-gaps",
     label: "Economic Need",
-    description: "Percentile need score blending income and other adoption-risk factors.",
+    description: "Percentile ranking of median household income, to account for adoption challenges even where infrastructure exists.",
     group: "anticipated-gaps-metric",
     interaction: "radio",
     geometry: "fill",

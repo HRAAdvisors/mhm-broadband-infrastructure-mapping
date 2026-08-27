@@ -20,6 +20,12 @@ export default function HomePage() {
             South Texas Broadband Infrastructure Mapping
           </h1>
           <p className="mt-4 max-w-2xl text-base text-white/80 sm:text-lg">
+            This dashboard maps broadband access, public investment, and
+            persistent service gaps across the region Methodist Healthcare
+            Ministries serves — built so MHM and its partners can see where
+            those three overlap and target future investment accordingly.
+          </p>
+          <p className="mt-3 max-w-2xl text-base text-white/80 sm:text-lg">
             Click below to review existing conditions, current federal and
             state investment, and anticipated gaps across Methodist
             Healthcare Ministries&apos; 74-county South Texas service area.

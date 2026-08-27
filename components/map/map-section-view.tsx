@@ -33,7 +33,7 @@ export function MapSectionView({ section }: { section: MapSection }) {
       </div>
 
       <div className="relative flex min-h-0 flex-1 flex-col md:flex-row">
-        <aside className="flex max-h-[45vh] shrink-0 flex-col overflow-y-auto border-b border-border bg-sidebar md:h-full md:max-h-none md:w-96 md:overflow-visible md:border-b-0 md:border-r">
+        <aside className="flex max-h-[60vh] shrink-0 flex-col overflow-y-auto border-b border-border bg-sidebar md:h-full md:max-h-none md:w-[36rem] md:overflow-visible md:border-b-0 md:border-r">
           <div className="flex shrink-0 items-center justify-between gap-2 border-b border-sidebar-border px-4 py-3">
             <CountySearch
               ref={countySearchRef}
@@ -45,6 +45,7 @@ export function MapSectionView({ section }: { section: MapSection }) {
             <Button
               variant="ghost"
               size="sm"
+              title="Return to the full service-area view and clear the county selection"
               onClick={() => {
                 mapRef.current?.resetView();
                 mapRef.current?.highlightCounty(null);
@@ -55,26 +56,32 @@ export function MapSectionView({ section }: { section: MapSection }) {
             </Button>
           </div>
 
-          <div className="flex min-h-0 flex-1 flex-col px-4 py-3">
-            <h3 className="mb-2 shrink-0 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Layers
-            </h3>
-            <ScrollArea className="min-h-0 flex-1">
-              <div className="pr-4">
-                <LayerControlPanel
-                  layers={layers}
-                  activeLayerIds={activeLayerIds}
-                  onChange={setActiveLayerIds}
-                />
-              </div>
-            </ScrollArea>
-          </div>
+          <div className="flex min-h-0 flex-1 flex-col md:flex-row">
+            <div className="flex min-h-0 flex-[3] flex-col border-b border-sidebar-border px-4 py-3 md:border-r md:border-b-0">
+              <h3 className="mb-2 shrink-0 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Layers
+              </h3>
+              <ScrollArea className="min-h-0 flex-1">
+                <div className="pr-4 pb-6">
+                  <LayerControlPanel
+                    layers={layers}
+                    activeLayerIds={activeLayerIds}
+                    onChange={setActiveLayerIds}
+                  />
+                </div>
+              </ScrollArea>
+            </div>
 
-          <div className="shrink-0 border-t border-sidebar-border px-4 py-3">
-            <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Legend
-            </h3>
-            <Legend layers={layers} activeLayerIds={activeLayerIds} />
+            <div className="flex min-h-0 flex-[2] flex-col px-4 py-3">
+              <h3 className="mb-2 shrink-0 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Legend
+              </h3>
+              <ScrollArea className="min-h-0 flex-1">
+                <div className="pr-4 pb-6">
+                  <Legend layers={layers} activeLayerIds={activeLayerIds} />
+                </div>
+              </ScrollArea>
+            </div>
           </div>
         </aside>
 

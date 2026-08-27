@@ -68,6 +68,7 @@ export const CountySearch = forwardRef<CountySearchHandle, CountySearchProps>(
         <PopoverTrigger
           role="combobox"
           aria-expanded={open}
+          title="Search for a county to zoom the map to it and outline its boundary"
           className={cn(
             buttonVariants({ variant: "outline" }),
             "min-w-0 flex-1 justify-between font-normal",
